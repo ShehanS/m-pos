@@ -29,6 +29,9 @@ class _SplashScreenState extends State<SplashScreen>
     );
     _controller.forward();
     _navigate();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<NotificationBloc>().add(NotificationInitializeEvent());
+    });
   }
 
   Future<void> _navigate() async {
@@ -79,7 +82,7 @@ class _SplashScreenState extends State<SplashScreen>
                 width: 100,
                 height: 100,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Colors.green,
                   borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(
@@ -137,9 +140,7 @@ class _SplashScreenState extends State<SplashScreen>
                   fontSize: 16,
                   letterSpacing: 0.5,
                 ),
-              )
-                  .animate()
-                  .fadeIn(
+              ).animate().fadeIn(
                     delay: const Duration(milliseconds: 700),
                     duration: const Duration(milliseconds: 600),
                   ),
@@ -156,9 +157,7 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                   strokeWidth: 2,
                 ),
-              )
-                  .animate()
-                  .fadeIn(
+              ).animate().fadeIn(
                     delay: const Duration(milliseconds: 1000),
                     duration: const Duration(milliseconds: 400),
                   ),

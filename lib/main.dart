@@ -24,8 +24,9 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  // ✅ No await — initialize runs in background after runApp
   final notificationService = NotificationService();
-  await notificationService.initialize();
+  notificationService.initialize(); // removed await
 
   runApp(MyApp(notificationService: notificationService));
 }
@@ -50,8 +51,12 @@ class MyApp extends StatelessWidget {
           create: (_) => ThemeBloc()..add(ThemeLoadEvent()),
         ),
         BlocProvider<NotificationBloc>(
-          create: (_) => NotificationBloc(notificationService: notificationService)
-            ..add(NotificationInitializeEvent()),
+          // ✅ Removed NotificationInitializeEvent here —
+          // notification_service.initialize() already handles setup
+          // trigger permission request from UI instead
+          create: (_) => NotificationBloc(
+            notificationService: notificationService,
+          ),
         ),
       ],
       child: BlocBuilder<LocaleBloc, LocaleState>(

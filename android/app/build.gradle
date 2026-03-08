@@ -1,23 +1,23 @@
 plugins {
     id "com.android.application"
     id "kotlin-android"
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id "dev.flutter.flutter-gradle-plugin"
     id "com.google.gms.google-services"
 }
 
 android {
-    namespace "com.yourcompany.flutterblocapp"
+    namespace "com.s3factory.mpos"
     compileSdk flutter.compileSdkVersion
     ndkVersion flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+        coreLibraryDesugaringEnabled true
     }
 
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
 
     sourceSets {
@@ -25,15 +25,11 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.yourcompany.flutterblocapp"
-        // Firebase requires minSdk 21+
-        // flutter.minSdkVersion is typically 21 in recent Flutter versions
+        applicationId "com.s3factory.mpos"
         minSdk 21
         targetSdk flutter.targetSdkVersion
         versionCode flutter.versionCode
         versionName flutter.versionName
-
-        // Required for multidex on older devices
         multiDexEnabled true
     }
 
@@ -43,9 +39,6 @@ android {
             minifyEnabled false
             shrinkResources false
         }
-        debug {
-            applicationIdSuffix ".debug"
-        }
     }
 }
 
@@ -54,11 +47,9 @@ flutter {
 }
 
 dependencies {
-    // Firebase BoM — manages all Firebase library versions
+    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"
     implementation platform("com.google.firebase:firebase-bom:32.7.0")
     implementation "com.google.firebase:firebase-analytics"
     implementation "com.google.firebase:firebase-messaging"
-
-    // Multidex support
     implementation "androidx.multidex:multidex:2.0.1"
 }
