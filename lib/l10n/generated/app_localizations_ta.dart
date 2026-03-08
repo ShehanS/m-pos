@@ -220,4 +220,13 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get deny => 'மறுக்கவும்';
+
+  @override
+  String get required => 'அவசியம்';
+
+  @override
+  String get select => 'தேர்ந்தெடுக்கவும்';
+
+  @override
+  String get change => 'மாற்றவும்';
 }

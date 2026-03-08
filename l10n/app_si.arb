@@ -83,5 +83,8 @@
   "notificationPermission": "දැනුම්දීම් සබල කරන්න",
   "notificationPermissionDesc": "වැදගත් යාවත්කාලීන සහ ඇඟවීම් ලබා ගන්න",
   "enable": "සබල කරන්න",
-  "deny": "ප්‍රතික්ෂේප කරන්න"
+  "deny": "ප්‍රතික්ෂේප කරන්න",
+  "required": "අවශ්‍යයි",
+  "select": "තෝරන්න",
+  "change": "වෙනස් කරන්න"
 }

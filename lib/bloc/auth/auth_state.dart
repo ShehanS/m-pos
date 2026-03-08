@@ -1,6 +1,6 @@
 // lib/bloc/auth/auth_state.dart
 import 'package:equatable/equatable.dart';
-import '../../models/user_model.dart';
+import '../../entities/user_entity.dart';
 
 enum AuthStatus {
   initial,
@@ -14,7 +14,7 @@ enum AuthStatus {
 
 class AuthState extends Equatable {
   final AuthStatus status;
-  final UserModel? user;
+  final UserEntity? user;
   final String? errorMessage;
   final String? resetEmail;
 
@@ -34,7 +34,7 @@ class AuthState extends Equatable {
 
   AuthState copyWith({
     AuthStatus? status,
-    UserModel? user,
+    UserEntity? user,
     String? errorMessage,
     String? resetEmail,
     bool clearUser = false,
@@ -53,7 +53,7 @@ class AuthState extends Equatable {
 
   const AuthState.loading() : this(status: AuthStatus.loading);
 
-  AuthState.authenticated(UserModel user)
+  AuthState.authenticated(UserEntity user)
       : this(status: AuthStatus.authenticated, user: user);
 
   const AuthState.unauthenticated()
@@ -62,7 +62,7 @@ class AuthState extends Equatable {
   AuthState.error(String message)
       : this(status: AuthStatus.error, errorMessage: message);
 
-  AuthState.registrationSuccess(UserModel user)
+  AuthState.registrationSuccess(UserEntity user)
       : this(status: AuthStatus.registrationSuccess, user: user);
 
   AuthState.passwordResetSent(String email)

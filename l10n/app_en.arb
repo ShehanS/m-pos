@@ -83,5 +83,8 @@
   "notificationPermission": "Enable Notifications",
   "notificationPermissionDesc": "Get important updates and alerts",
   "enable": "Enable",
-  "deny": "Deny"
+  "deny": "Deny",
+  "required": "Required",
+  "select":"Select",
+  "change":"Change"
 }

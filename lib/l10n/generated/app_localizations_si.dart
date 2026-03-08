@@ -220,4 +220,13 @@ class AppLocalizationsSi extends AppLocalizations {
 
   @override
   String get deny => 'ප්‍රතික්ෂේප කරන්න';
+
+  @override
+  String get required => 'අවශ්‍යයි';
+
+  @override
+  String get select => 'තෝරන්න';
+
+  @override
+  String get change => 'වෙනස් කරන්න';
 }

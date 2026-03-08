@@ -220,4 +220,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deny => 'Deny';
+
+  @override
+  String get required => 'Required';
+
+  @override
+  String get select => 'Select';
+
+  @override
+  String get change => 'Change';
 }

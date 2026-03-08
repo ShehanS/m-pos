@@ -5,9 +5,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-import '../models/user_model.dart';
+import '../entities/user_entity.dart';
 
-typedef AuthResult = Either<String, UserModel>;
+typedef AuthResult = Either<String, UserEntity>;
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -16,10 +16,10 @@ class AuthService {
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  UserModel? get currentUser {
+  UserEntity? get currentUser {
     final user = _auth.currentUser;
     if (user == null) return null;
-    return UserModel(
+    return UserEntity(
       uid: user.uid,
       email: user.email ?? '',
       displayName: user.displayName,
@@ -75,7 +75,7 @@ class AuthService {
 
       final fcmToken = await _getFcmToken();
 
-      final userModel = UserModel(
+      final userModel = UserEntity(
         uid: user.uid,
         email: email.trim(),
         username: username,
@@ -112,9 +112,9 @@ class AuthService {
       final user = userCredential.user!;
       final fcmToken = await _getFcmToken();
 
-      UserModel? existingUser = await _getUserFromFirestore(user.uid);
+      UserEntity? existingUser = await _getUserFromFirestore(user.uid);
       if (existingUser == null) {
-        final newUser = UserModel(
+        final newUser = UserEntity(
           uid: user.uid,
           email: user.email ?? '',
           username: user.displayName?.replaceAll(' ', '_').toLowerCase(),
@@ -177,7 +177,7 @@ class AuthService {
         if (photoUrl != null) 'photoUrl': photoUrl,
       });
 
-      final updated = UserModel(
+      final updated = UserEntity(
         uid: user.uid,
         email: user.email ?? '',
         displayName: displayName ?? user.displayName,
@@ -191,25 +191,25 @@ class AuthService {
   }
 
   // Private helpers
-  Future<UserModel?> _getUserFromFirestore(String uid) async {
+  Future<UserEntity?> _getUserFromFirestore(String uid) async {
     try {
       final doc = await _firestore.collection('users').doc(uid).get();
       if (!doc.exists) return null;
-      return UserModel.fromFirestore(doc.data()!, uid);
+      return UserEntity.fromFirestore(doc.data()!, uid);
     } catch (_) {
       return null;
     }
   }
 
-  Future<void> _saveUserToFirestore(UserModel user) async {
+  Future<void> _saveUserToFirestore(UserEntity user) async {
     await _firestore
         .collection('users')
         .doc(user.uid)
         .set(user.toFirestore(), SetOptions(merge: true));
   }
 
-  UserModel _userFromFirebaseUser(User user) {
-    return UserModel(
+  UserEntity _userFromFirebaseUser(User user) {
+    return UserEntity(
       uid: user.uid,
       email: user.email ?? '',
       displayName: user.displayName,
