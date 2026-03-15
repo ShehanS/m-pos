@@ -229,4 +229,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get change => 'மாற்றவும்';
+
+  @override
+  String get updateProfile => 'உங்கள் விவரங்களை இங்கே புதுப்பிக்கவும்';
 }

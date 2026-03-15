@@ -229,4 +229,7 @@ class AppLocalizationsSi extends AppLocalizations {
 
   @override
   String get change => 'වෙනස් කරන්න';
+
+  @override
+  String get updateProfile => 'ඔබගේ විස්තර මෙහි යාවත්කාලීන කරන්න';
 }

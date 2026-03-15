@@ -6,3 +6,6 @@ export 'auth/auth_bloc.dart';
 export 'locale/locale_bloc.dart';
 export 'theme/theme_bloc.dart';
 export 'notification/notification_bloc.dart';
+export 'master_data/master_data_bloc.dart';
+export 'master_data/master_data_event.dart';
+export 'master_data/master_data_state.dart';

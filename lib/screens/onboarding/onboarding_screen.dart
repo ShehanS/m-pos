@@ -2,11 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../local_storage/local_storage_service.dart';
 import '../../routes/route_names.dart';
-import '../../theme/app_theme.dart';
+
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -17,6 +17,7 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
+  final  _storageService = LocalStorageService.instance;
   int _currentPage = 0;
 
   final List<Map<String, dynamic>> _pages = [
@@ -38,8 +39,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   ];
 
   Future<void> _completeOnboarding() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('has_seen_onboarding', true);
+    _storageService.saveIntroEnabled(true);
     if (mounted) context.go(RouteNames.login);
   }
 

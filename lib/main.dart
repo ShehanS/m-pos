@@ -2,11 +2,17 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_bloc_app/bloc/profile/profile_bloc.dart';
+import 'package:flutter_bloc_app/repositories/master_data_repository.dart';
+import 'package:flutter_bloc_app/repositories/profile_repository.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'bloc/blocs.dart';
+import 'bloc/locale/locale_event.dart';
+import 'bloc/locale/locale_state.dart';
 import 'firebase_options.dart';
 import 'l10n/app_localizations.dart';
+import 'local_storage/local_storage_service.dart';
 import 'routes/app_router.dart';
 import 'services/auth_service.dart';
 import 'services/notification_service.dart';
@@ -14,21 +20,17 @@ import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
-  // ✅ No await — initialize runs in background after runApp
   final notificationService = NotificationService();
-  notificationService.initialize(); // removed await
-
+  await LocalStorageService.instance.init();
   runApp(MyApp(notificationService: notificationService));
+  await notificationService.initialize();
 }
 
 class MyApp extends StatelessWidget {
@@ -41,19 +43,29 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthBloc>(
-          create: (_) => AuthBloc(authService: AuthService())
-            ..add(AuthCheckStatusEvent()),
+          lazy: false,
+          create: (_) =>
+              AuthBloc(authService: AuthService())..add(AuthCheckStatusEvent()),
         ),
         BlocProvider<LocaleBloc>(
+          lazy: false,
           create: (_) => LocaleBloc()..add(LocaleLoadEvent()),
         ),
+        BlocProvider<ProfileBloc>(
+          lazy: false,
+          create: (_) => ProfileBloc(ProfileRepositoryImpl()),
+        ),
         BlocProvider<ThemeBloc>(
+          lazy: false,
           create: (_) => ThemeBloc()..add(ThemeLoadEvent()),
         ),
+        BlocProvider<MasterDataBloc>(
+          lazy: false,
+          create: (_) => MasterDataBloc(MasterDataRepositoryImpl())
+            ..add(const LoadMasterData()),
+        ),
         BlocProvider<NotificationBloc>(
-          // ✅ Removed NotificationInitializeEvent here —
-          // notification_service.initialize() already handles setup
-          // trigger permission request from UI instead
+          lazy: false,
           create: (_) => NotificationBloc(
             notificationService: notificationService,
           ),

@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../bloc/blocs.dart';
+import '../bloc/locale/app_locales.dart';
+import '../bloc/locale/locale_event.dart';
+import '../bloc/locale/locale_state.dart';
 import '../theme/app_theme.dart';
 
 class LanguageSelector extends StatelessWidget {

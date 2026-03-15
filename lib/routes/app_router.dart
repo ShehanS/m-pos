@@ -1,6 +1,7 @@
 // lib/routes/app_router.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_bloc_app/screens/profile/update_profile.dart';
 import 'package:go_router/go_router.dart';
 
 import '../bloc/blocs.dart';
@@ -26,6 +27,7 @@ class AppRouter {
           state.matchedLocation == RouteNames.register ||
           state.matchedLocation == RouteNames.forgotPassword ||
           state.matchedLocation == RouteNames.onboarding ||
+          // state.matchedLocation == RouteNames.updateProfile ||
           state.matchedLocation == RouteNames.splash;
 
       if (authState.isLoading) return null;
@@ -34,10 +36,17 @@ class AppRouter {
         return RouteNames.login;
       }
 
+      if (authState.isAuthenticated &&
+          !authState.user!.isUpdateProfile &&
+          state.matchedLocation != RouteNames.updateProfile) {
+        return RouteNames.updateProfile;
+      }
+
       if (authState.isAuthenticated && isOnAuthPage &&
           state.matchedLocation != RouteNames.splash) {
         return RouteNames.home;
       }
+
 
       return null;
     },
@@ -71,6 +80,15 @@ class AppRouter {
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const RegisterScreen(),
+          transitionsBuilder: _slideTransition,
+        ),
+      ),
+      GoRoute(
+        path: RouteNames.updateProfile,
+        name: 'updateProfile',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const UpdateProfile(),
           transitionsBuilder: _slideTransition,
         ),
       ),
@@ -132,7 +150,8 @@ class AppRouter {
         position: Tween<Offset>(
           begin: const Offset(0, 0.05),
           end: Offset.zero,
-        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
+        ).animate(
+            CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
         child: child,
       ),
     );

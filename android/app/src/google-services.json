@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "372086857573",
+    "project_id": "mposh-413ff",
+    "storage_bucket": "mposh-413ff.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:372086857573:android:af46dc1daaa982017fcb8c",
+        "android_client_info": {
+          "package_name": "com.s3factory.mpos"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "372086857573-lbrr36rop8jr7o6kons3qu7v0l1g7ivj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.s3factory.mpos",
+            "certificate_hash": "9ec8d1bbe7300a670a25d39fb2502c2f46af3f7e"
+          }
+        },
+        {
+          "client_id": "372086857573-ksqqpcbsmbqa6kmere8jrbe4j60n1u9p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-doXgAwBqFK3UXrzIL4CngXNXrvyAEUY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "372086857573-ksqqpcbsmbqa6kmere8jrbe4j60n1u9p.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
