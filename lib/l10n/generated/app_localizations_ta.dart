@@ -232,4 +232,16 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get updateProfile => 'உங்கள் விவரங்களை இங்கே புதுப்பிக்கவும்';
+
+  @override
+  String get firstName => 'முதல் பெயர்';
+
+  @override
+  String get lastName => 'கடைசி பெயர்';
+
+  @override
+  String get address => 'முகவரி';
+
+  @override
+  String get contact => 'தொடர்பு எண்';
 }

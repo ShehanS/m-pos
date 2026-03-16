@@ -2,9 +2,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_bloc_app/bloc/profile/profile_bloc.dart';
+import 'package:flutter_bloc_app/bloc/user/user_bloc.dart';
 import 'package:flutter_bloc_app/repositories/master_data_repository.dart';
-import 'package:flutter_bloc_app/repositories/profile_repository.dart';
+import 'package:flutter_bloc_app/repositories/user_repository.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'bloc/blocs.dart';
@@ -51,9 +51,9 @@ class MyApp extends StatelessWidget {
           lazy: false,
           create: (_) => LocaleBloc()..add(LocaleLoadEvent()),
         ),
-        BlocProvider<ProfileBloc>(
+        BlocProvider<UserBloc>(
           lazy: false,
-          create: (_) => ProfileBloc(ProfileRepositoryImpl()),
+          create: (_) => UserBloc(UserRepositoryImpl()),
         ),
         BlocProvider<ThemeBloc>(
           lazy: false,
@@ -89,7 +89,8 @@ class MyApp extends StatelessWidget {
                   GlobalWidgetsLocalizations.delegate,
                   GlobalCupertinoLocalizations.delegate,
                 ],
-                routerConfig: AppRouter.router,
+                routerConfig: AppRouter.createRouter(
+                    context.read<AuthBloc>(), context.read<UserBloc>()),
               );
             },
           );

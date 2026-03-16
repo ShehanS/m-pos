@@ -2,6 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_bloc_app/bloc/user/user_bloc.dart';
+import 'package:flutter_bloc_app/bloc/user/user_event.dart';
+import 'package:flutter_bloc_app/bloc/user/user_state.dart';
 
 import '../../bloc/blocs.dart';
 import '../../bloc/locale/app_locales.dart';
@@ -17,7 +20,8 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-
+    final authState = context.watch<AuthBloc>().state;
+    final user = authState.user;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settings)),
@@ -25,9 +29,7 @@ class SettingsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         children: [
           // Theme section
-          _SectionHeader(title: l10n.theme)
-              .animate()
-              .fadeIn(delay: 200.ms),
+          _SectionHeader(title: l10n.theme).animate().fadeIn(delay: 200.ms),
 
           const SizedBox(height: 12),
 
@@ -46,14 +48,15 @@ class SettingsScreen extends StatelessWidget {
                 ),
               );
             },
-          ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.05, end: 0, delay: 300.ms),
+          )
+              .animate()
+              .fadeIn(delay: 300.ms)
+              .slideX(begin: -0.05, end: 0, delay: 300.ms),
 
           const SizedBox(height: 24),
 
           // Language section
-          _SectionHeader(title: l10n.language)
-              .animate()
-              .fadeIn(delay: 400.ms),
+          _SectionHeader(title: l10n.language).animate().fadeIn(delay: 400.ms),
 
           const SizedBox(height: 12),
 
@@ -61,7 +64,8 @@ class SettingsScreen extends StatelessWidget {
             builder: (context, state) {
               return Column(
                 children: AppLocales.supported.map((locale) {
-                  final isSelected = state.locale.languageCode == locale.languageCode;
+                  final isSelected =
+                      state.locale.languageCode == locale.languageCode;
                   return _LanguageTile(
                     locale: locale,
                     isSelected: isSelected,
@@ -79,10 +83,14 @@ class SettingsScreen extends StatelessWidget {
 
           const SizedBox(height: 24),
 
+          // Language section
+          _SectionHeader(title: "Buiness").animate().fadeIn(delay: 400.ms),
+
+          _showBusinessConfig(user!.uid),
+          const SizedBox(height: 12),
+
           // Account section
-          _SectionHeader(title: 'Account')
-              .animate()
-              .fadeIn(delay: 600.ms),
+          _SectionHeader(title: 'Account').animate().fadeIn(delay: 600.ms),
 
           const SizedBox(height: 12),
 
@@ -92,10 +100,30 @@ class SettingsScreen extends StatelessWidget {
             iconColor: Colors.red,
             titleColor: Colors.red,
             onTap: () => _showSignOutDialog(context, l10n),
-          ).animate().fadeIn(delay: 700.ms).slideX(begin: -0.05, end: 0, delay: 700.ms),
+          )
+              .animate()
+              .fadeIn(delay: 700.ms)
+              .slideX(begin: -0.05, end: 0, delay: 700.ms),
         ],
       ),
     );
+  }
+
+  Widget _showBusinessConfig(String uid) {
+    return BlocBuilder<UserBloc, UserState>(builder: (context, state) {
+      if (state.status == UserStatus.initial) {
+        context.read<UserBloc>().add(GetUser(uid: uid));
+      }
+
+      if (state.status == UserStatus.loading) {
+        return const CircularProgressIndicator();
+      }
+
+      if (state.status == UserStatus.loaded) {
+        return Text(state.user.toString());
+      }
+      return Text("profile");
+    });
   }
 
   void _showSignOutDialog(BuildContext context, AppLocalizations l10n) {
@@ -173,7 +201,8 @@ class _SettingsTile extends StatelessWidget {
             color: titleColor,
           ),
         ),
-        trailing: trailing ?? (onTap != null ? const Icon(Icons.chevron_right) : null),
+        trailing: trailing ??
+            (onTap != null ? const Icon(Icons.chevron_right) : null),
         onTap: onTap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -197,14 +226,11 @@ class _LanguageTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: isSelected
-            ? AppTheme.primaryColor.withOpacity(0.1)
-            : null,
+        color: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : null,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isSelected
-              ? AppTheme.primaryColor
-              : Colors.grey.withOpacity(0.2),
+          color:
+              isSelected ? AppTheme.primaryColor : Colors.grey.withOpacity(0.2),
           width: isSelected ? 2 : 1,
         ),
       ),

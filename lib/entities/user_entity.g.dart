@@ -13,23 +13,15 @@ _$UserEntityImpl _$$UserEntityImplFromJson(Map<String, dynamic> json) =>
       username: json['username'] as String?,
       displayName: json['displayName'] as String?,
       photoUrl: json['photoUrl'] as String?,
+      firstName: json['firstName'] as String?,
+      lastName: json['lastName'] as String?,
+      contact: json['contact'] as String?,
+      address: json['address'] as String?,
       isUpdateProfile: json['isUpdateProfile'] as bool? ?? false,
       emailVerified: json['emailVerified'] as bool? ?? false,
       createdAt: json['createdAt'] == null
           ? null
           : DateTime.parse(json['createdAt'] as String),
-      profile: (json['profile'] as List<dynamic>?)
-          ?.map((e) => FormFieldEntity.fromJson(e as String))
-          .toList(),
-      business: (json['business'] as List<dynamic>?)
-          ?.map((e) => (e as Map<String, dynamic>).map(
-                (k, e) => MapEntry(
-                    k,
-                    (e as List<dynamic>)
-                        .map((e) => FormFieldEntity.fromJson(e as String))
-                        .toList()),
-              ))
-          .toList(),
       fcmToken: json['fcmToken'] as String?,
     );
 
@@ -40,10 +32,12 @@ Map<String, dynamic> _$$UserEntityImplToJson(_$UserEntityImpl instance) =>
       'username': instance.username,
       'displayName': instance.displayName,
       'photoUrl': instance.photoUrl,
+      'firstName': instance.firstName,
+      'lastName': instance.lastName,
+      'contact': instance.contact,
+      'address': instance.address,
       'isUpdateProfile': instance.isUpdateProfile,
       'emailVerified': instance.emailVerified,
       'createdAt': instance.createdAt?.toIso8601String(),
-      'profile': instance.profile,
-      'business': instance.business,
       'fcmToken': instance.fcmToken,
     };

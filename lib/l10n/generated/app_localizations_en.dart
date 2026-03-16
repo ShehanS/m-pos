@@ -232,4 +232,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateProfile => 'Update Your Details Here';
+
+  @override
+  String get firstName => 'First Name';
+
+  @override
+  String get lastName => 'Last Name';
+
+  @override
+  String get address => 'Address';
+
+  @override
+  String get contact => 'Contact';
 }

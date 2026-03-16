@@ -1,4 +1,3 @@
-// lib/screens/splash/splash_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -41,11 +40,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     final hasSeenOnboarding = _localStorageService.getIntroEnabled() ?? false;
 
-    final authState = context.read<AuthBloc>().state;
-
-    if (authState.isAuthenticated) {
-      context.go(RouteNames.home);
-    } else if (!hasSeenOnboarding) {
+    if (!hasSeenOnboarding) {
       context.go(RouteNames.onboarding);
     } else {
       context.go(RouteNames.login);
@@ -77,7 +72,6 @@ class _SplashScreenState extends State<SplashScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo
               Container(
                 width: 100,
                 height: 100,
@@ -100,16 +94,15 @@ class _SplashScreenState extends State<SplashScreen>
               )
                   .animate()
                   .scale(
-                    begin: const Offset(0, 0),
-                    end: const Offset(1, 1),
-                    curve: Curves.elasticOut,
-                    duration: const Duration(milliseconds: 800),
-                  )
+                begin: const Offset(0, 0),
+                end: const Offset(1, 1),
+                curve: Curves.elasticOut,
+                duration: const Duration(milliseconds: 800),
+              )
                   .fadeIn(duration: const Duration(milliseconds: 400)),
 
               const SizedBox(height: 24),
 
-              // App name
               const Text(
                 'BLoC App',
                 style: TextStyle(
@@ -121,15 +114,15 @@ class _SplashScreenState extends State<SplashScreen>
               )
                   .animate()
                   .fadeIn(
-                    delay: const Duration(milliseconds: 400),
-                    duration: const Duration(milliseconds: 600),
-                  )
+                delay: const Duration(milliseconds: 400),
+                duration: const Duration(milliseconds: 600),
+              )
                   .slideY(
-                    begin: 0.3,
-                    end: 0,
-                    delay: const Duration(milliseconds: 400),
-                    curve: Curves.easeOutCubic,
-                  ),
+                begin: 0.3,
+                end: 0,
+                delay: const Duration(milliseconds: 400),
+                curve: Curves.easeOutCubic,
+              ),
 
               const SizedBox(height: 8),
 
@@ -141,13 +134,12 @@ class _SplashScreenState extends State<SplashScreen>
                   letterSpacing: 0.5,
                 ),
               ).animate().fadeIn(
-                    delay: const Duration(milliseconds: 700),
-                    duration: const Duration(milliseconds: 600),
-                  ),
+                delay: const Duration(milliseconds: 700),
+                duration: const Duration(milliseconds: 600),
+              ),
 
               const SizedBox(height: 60),
 
-              // Loading indicator
               SizedBox(
                 width: 40,
                 height: 40,
@@ -158,9 +150,9 @@ class _SplashScreenState extends State<SplashScreen>
                   strokeWidth: 2,
                 ),
               ).animate().fadeIn(
-                    delay: const Duration(milliseconds: 1000),
-                    duration: const Duration(milliseconds: 400),
-                  ),
+                delay: const Duration(milliseconds: 1000),
+                duration: const Duration(milliseconds: 400),
+              ),
             ],
           ),
         ),

@@ -1,4 +1,3 @@
-import 'package:flutter_bloc_app/entities/form_field_entity.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'user_entity.freezed.dart';
@@ -14,38 +13,32 @@ class UserEntity with _$UserEntity {
     String? username,
     String? displayName,
     String? photoUrl,
+    String? firstName,
+    String? lastName,
+    String? contact,
+    String? address,
     @Default(false) bool isUpdateProfile,
     @Default(false) bool emailVerified,
     DateTime? createdAt,
-    List<FormFieldEntity>? profile,
-    List<Map<String, List<FormFieldEntity>>>? business,
     String? fcmToken,
   }) = _UserEntity;
 
-  factory UserEntity.fromFirestore(Map<String, dynamic> data, String uid) {
+  factory UserEntity.fromFirestore(Map<String, dynamic> data) {
     return UserEntity(
-      uid: uid,
+      uid: data['uid'] as String? ?? '',
       email: data['email'] as String? ?? '',
       username: data['username'] as String?,
       displayName: data['displayName'] as String?,
       photoUrl: data['photoUrl'] as String?,
+      firstName: data['firstName'] as String?,
+      lastName: data['lastName'] as String?,
+      contact: data['contact'] as String?,
+      address: data['address'] as String?,
+      isUpdateProfile: data['isUpdateProfile'] as bool? ?? false,
       emailVerified: data['emailVerified'] as bool? ?? false,
-      createdAt: data['createdAt'] as DateTime?,
-      profile: (data['profile'] as List?)
-          ?.map((e) => FormFieldEntity.fromMap(Map<String, dynamic>.from(e)))
-          .toList(),
-      business: (data['business'] as List?)
-          ?.map((e) => (e as Map<String, dynamic>).map(
-            (key, value) => MapEntry(
-          key,
-          (value as List)
-              .map((f) => FormFieldEntity.fromMap(
-            Map<String, dynamic>.from(f),
-          ))
-              .toList(),
-        ),
-      ))
-          .toList(),
+      createdAt: data['createdAt'] != null
+          ? (data['createdAt'] as dynamic).toDate()
+          : null,
       fcmToken: data['fcmToken'] as String?,
     );
   }
@@ -54,23 +47,22 @@ class UserEntity with _$UserEntity {
       _$UserEntityFromJson(json);
 
   Map<String, dynamic> toFirestore() {
-    return {
+    final map = <String, dynamic>{
       'uid': uid,
       'email': email,
-      'username': username,
-      'displayName': displayName,
-      'photoUrl': photoUrl,
+      'isUpdateProfile': isUpdateProfile,
       'emailVerified': emailVerified,
-      'createdAt': createdAt,
-      'profile': profile?.map((e) => e.toMap()).toList(),
-      'business': business
-          ?.map((section) => section.map(
-            (key, value) =>
-            MapEntry(key, value.map((e) => e.toMap()).toList()),
-      ))
-          .toList(),
-      'fcmToken': fcmToken,
+      if (username != null) 'username': username,
+      if (displayName != null) 'displayName': displayName,
+      if (photoUrl != null) 'photoUrl': photoUrl,
+      if (firstName != null) 'firstName': firstName,
+      if (lastName != null) 'lastName': lastName,
+      if (contact != null) 'contact': contact,
+      if (address != null) 'address': address,
+      if (createdAt != null) 'createdAt': createdAt,
+      if (fcmToken != null) 'fcmToken': fcmToken,
     };
+    return map;
   }
 
   String get initials {

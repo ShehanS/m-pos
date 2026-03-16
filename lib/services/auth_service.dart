@@ -195,7 +195,7 @@ class AuthService {
     try {
       final doc = await _firestore.collection('users').doc(uid).get();
       if (!doc.exists) return null;
-      return UserEntity.fromFirestore(doc.data()!, uid);
+      return UserEntity.fromFirestore(doc.data()!);
     } catch (_) {
       return null;
     }

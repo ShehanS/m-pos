@@ -20,6 +20,7 @@ class HomeScreen extends StatelessWidget {
     final authState = context.watch<AuthBloc>().state;
     final user = authState.user;
 
+
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.home),

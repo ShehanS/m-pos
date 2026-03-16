@@ -25,12 +25,13 @@ mixin _$UserEntity {
   String? get username => throw _privateConstructorUsedError;
   String? get displayName => throw _privateConstructorUsedError;
   String? get photoUrl => throw _privateConstructorUsedError;
+  String? get firstName => throw _privateConstructorUsedError;
+  String? get lastName => throw _privateConstructorUsedError;
+  String? get contact => throw _privateConstructorUsedError;
+  String? get address => throw _privateConstructorUsedError;
   bool get isUpdateProfile => throw _privateConstructorUsedError;
   bool get emailVerified => throw _privateConstructorUsedError;
   DateTime? get createdAt => throw _privateConstructorUsedError;
-  List<FormFieldEntity>? get profile => throw _privateConstructorUsedError;
-  List<Map<String, List<FormFieldEntity>>>? get business =>
-      throw _privateConstructorUsedError;
   String? get fcmToken => throw _privateConstructorUsedError;
 
   /// Serializes this UserEntity to a JSON map.
@@ -55,11 +56,13 @@ abstract class $UserEntityCopyWith<$Res> {
       String? username,
       String? displayName,
       String? photoUrl,
+      String? firstName,
+      String? lastName,
+      String? contact,
+      String? address,
       bool isUpdateProfile,
       bool emailVerified,
       DateTime? createdAt,
-      List<FormFieldEntity>? profile,
-      List<Map<String, List<FormFieldEntity>>>? business,
       String? fcmToken});
 }
 
@@ -83,11 +86,13 @@ class _$UserEntityCopyWithImpl<$Res, $Val extends UserEntity>
     Object? username = freezed,
     Object? displayName = freezed,
     Object? photoUrl = freezed,
+    Object? firstName = freezed,
+    Object? lastName = freezed,
+    Object? contact = freezed,
+    Object? address = freezed,
     Object? isUpdateProfile = null,
     Object? emailVerified = null,
     Object? createdAt = freezed,
-    Object? profile = freezed,
-    Object? business = freezed,
     Object? fcmToken = freezed,
   }) {
     return _then(_value.copyWith(
@@ -111,6 +116,22 @@ class _$UserEntityCopyWithImpl<$Res, $Val extends UserEntity>
           ? _value.photoUrl
           : photoUrl // ignore: cast_nullable_to_non_nullable
               as String?,
+      firstName: freezed == firstName
+          ? _value.firstName
+          : firstName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      lastName: freezed == lastName
+          ? _value.lastName
+          : lastName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      contact: freezed == contact
+          ? _value.contact
+          : contact // ignore: cast_nullable_to_non_nullable
+              as String?,
+      address: freezed == address
+          ? _value.address
+          : address // ignore: cast_nullable_to_non_nullable
+              as String?,
       isUpdateProfile: null == isUpdateProfile
           ? _value.isUpdateProfile
           : isUpdateProfile // ignore: cast_nullable_to_non_nullable
@@ -123,14 +144,6 @@ class _$UserEntityCopyWithImpl<$Res, $Val extends UserEntity>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
-      profile: freezed == profile
-          ? _value.profile
-          : profile // ignore: cast_nullable_to_non_nullable
-              as List<FormFieldEntity>?,
-      business: freezed == business
-          ? _value.business
-          : business // ignore: cast_nullable_to_non_nullable
-              as List<Map<String, List<FormFieldEntity>>>?,
       fcmToken: freezed == fcmToken
           ? _value.fcmToken
           : fcmToken // ignore: cast_nullable_to_non_nullable
@@ -153,11 +166,13 @@ abstract class _$$UserEntityImplCopyWith<$Res>
       String? username,
       String? displayName,
       String? photoUrl,
+      String? firstName,
+      String? lastName,
+      String? contact,
+      String? address,
       bool isUpdateProfile,
       bool emailVerified,
       DateTime? createdAt,
-      List<FormFieldEntity>? profile,
-      List<Map<String, List<FormFieldEntity>>>? business,
       String? fcmToken});
 }
 
@@ -179,11 +194,13 @@ class __$$UserEntityImplCopyWithImpl<$Res>
     Object? username = freezed,
     Object? displayName = freezed,
     Object? photoUrl = freezed,
+    Object? firstName = freezed,
+    Object? lastName = freezed,
+    Object? contact = freezed,
+    Object? address = freezed,
     Object? isUpdateProfile = null,
     Object? emailVerified = null,
     Object? createdAt = freezed,
-    Object? profile = freezed,
-    Object? business = freezed,
     Object? fcmToken = freezed,
   }) {
     return _then(_$UserEntityImpl(
@@ -207,6 +224,22 @@ class __$$UserEntityImplCopyWithImpl<$Res>
           ? _value.photoUrl
           : photoUrl // ignore: cast_nullable_to_non_nullable
               as String?,
+      firstName: freezed == firstName
+          ? _value.firstName
+          : firstName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      lastName: freezed == lastName
+          ? _value.lastName
+          : lastName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      contact: freezed == contact
+          ? _value.contact
+          : contact // ignore: cast_nullable_to_non_nullable
+              as String?,
+      address: freezed == address
+          ? _value.address
+          : address // ignore: cast_nullable_to_non_nullable
+              as String?,
       isUpdateProfile: null == isUpdateProfile
           ? _value.isUpdateProfile
           : isUpdateProfile // ignore: cast_nullable_to_non_nullable
@@ -219,14 +252,6 @@ class __$$UserEntityImplCopyWithImpl<$Res>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
-      profile: freezed == profile
-          ? _value._profile
-          : profile // ignore: cast_nullable_to_non_nullable
-              as List<FormFieldEntity>?,
-      business: freezed == business
-          ? _value._business
-          : business // ignore: cast_nullable_to_non_nullable
-              as List<Map<String, List<FormFieldEntity>>>?,
       fcmToken: freezed == fcmToken
           ? _value.fcmToken
           : fcmToken // ignore: cast_nullable_to_non_nullable
@@ -244,15 +269,15 @@ class _$UserEntityImpl extends _UserEntity {
       this.username,
       this.displayName,
       this.photoUrl,
+      this.firstName,
+      this.lastName,
+      this.contact,
+      this.address,
       this.isUpdateProfile = false,
       this.emailVerified = false,
       this.createdAt,
-      final List<FormFieldEntity>? profile,
-      final List<Map<String, List<FormFieldEntity>>>? business,
       this.fcmToken})
-      : _profile = profile,
-        _business = business,
-        super._();
+      : super._();
 
   factory _$UserEntityImpl.fromJson(Map<String, dynamic> json) =>
       _$$UserEntityImplFromJson(json);
@@ -268,6 +293,14 @@ class _$UserEntityImpl extends _UserEntity {
   @override
   final String? photoUrl;
   @override
+  final String? firstName;
+  @override
+  final String? lastName;
+  @override
+  final String? contact;
+  @override
+  final String? address;
+  @override
   @JsonKey()
   final bool isUpdateProfile;
   @override
@@ -275,32 +308,12 @@ class _$UserEntityImpl extends _UserEntity {
   final bool emailVerified;
   @override
   final DateTime? createdAt;
-  final List<FormFieldEntity>? _profile;
-  @override
-  List<FormFieldEntity>? get profile {
-    final value = _profile;
-    if (value == null) return null;
-    if (_profile is EqualUnmodifiableListView) return _profile;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(value);
-  }
-
-  final List<Map<String, List<FormFieldEntity>>>? _business;
-  @override
-  List<Map<String, List<FormFieldEntity>>>? get business {
-    final value = _business;
-    if (value == null) return null;
-    if (_business is EqualUnmodifiableListView) return _business;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(value);
-  }
-
   @override
   final String? fcmToken;
 
   @override
   String toString() {
-    return 'UserEntity(uid: $uid, email: $email, username: $username, displayName: $displayName, photoUrl: $photoUrl, isUpdateProfile: $isUpdateProfile, emailVerified: $emailVerified, createdAt: $createdAt, profile: $profile, business: $business, fcmToken: $fcmToken)';
+    return 'UserEntity(uid: $uid, email: $email, username: $username, displayName: $displayName, photoUrl: $photoUrl, firstName: $firstName, lastName: $lastName, contact: $contact, address: $address, isUpdateProfile: $isUpdateProfile, emailVerified: $emailVerified, createdAt: $createdAt, fcmToken: $fcmToken)';
   }
 
   @override
@@ -316,14 +329,18 @@ class _$UserEntityImpl extends _UserEntity {
                 other.displayName == displayName) &&
             (identical(other.photoUrl, photoUrl) ||
                 other.photoUrl == photoUrl) &&
+            (identical(other.firstName, firstName) ||
+                other.firstName == firstName) &&
+            (identical(other.lastName, lastName) ||
+                other.lastName == lastName) &&
+            (identical(other.contact, contact) || other.contact == contact) &&
+            (identical(other.address, address) || other.address == address) &&
             (identical(other.isUpdateProfile, isUpdateProfile) ||
                 other.isUpdateProfile == isUpdateProfile) &&
             (identical(other.emailVerified, emailVerified) ||
                 other.emailVerified == emailVerified) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
-            const DeepCollectionEquality().equals(other._profile, _profile) &&
-            const DeepCollectionEquality().equals(other._business, _business) &&
             (identical(other.fcmToken, fcmToken) ||
                 other.fcmToken == fcmToken));
   }
@@ -337,11 +354,13 @@ class _$UserEntityImpl extends _UserEntity {
       username,
       displayName,
       photoUrl,
+      firstName,
+      lastName,
+      contact,
+      address,
       isUpdateProfile,
       emailVerified,
       createdAt,
-      const DeepCollectionEquality().hash(_profile),
-      const DeepCollectionEquality().hash(_business),
       fcmToken);
 
   /// Create a copy of UserEntity
@@ -367,11 +386,13 @@ abstract class _UserEntity extends UserEntity {
       final String? username,
       final String? displayName,
       final String? photoUrl,
+      final String? firstName,
+      final String? lastName,
+      final String? contact,
+      final String? address,
       final bool isUpdateProfile,
       final bool emailVerified,
       final DateTime? createdAt,
-      final List<FormFieldEntity>? profile,
-      final List<Map<String, List<FormFieldEntity>>>? business,
       final String? fcmToken}) = _$UserEntityImpl;
   const _UserEntity._() : super._();
 
@@ -389,15 +410,19 @@ abstract class _UserEntity extends UserEntity {
   @override
   String? get photoUrl;
   @override
+  String? get firstName;
+  @override
+  String? get lastName;
+  @override
+  String? get contact;
+  @override
+  String? get address;
+  @override
   bool get isUpdateProfile;
   @override
   bool get emailVerified;
   @override
   DateTime? get createdAt;
-  @override
-  List<FormFieldEntity>? get profile;
-  @override
-  List<Map<String, List<FormFieldEntity>>>? get business;
   @override
   String? get fcmToken;
 

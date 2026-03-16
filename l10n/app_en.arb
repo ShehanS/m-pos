@@ -88,5 +88,9 @@
   "select":"Select",
   "change":"Change",
   "updateProfile":"Update Your Details Here",
-  "next":"Next"
+  "next":"Next",
+  "firstName":"First Name",
+  "lastName":"Last Name",
+  "address":"Address",
+  "contact":"Contact"
 }

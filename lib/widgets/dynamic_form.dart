@@ -933,17 +933,7 @@ class _DynamicFormState extends State<DynamicForm> {
           widget.buttonLabel,
           style: CustomTextStyle.googleInter(
               color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: _primary,
-          disabledBackgroundColor: _primary.withOpacity(0.6),
-          disabledForegroundColor: Colors.white,
-          elevation: widget.isDark ? 0 : 2,
-          shadowColor:
-              widget.isDark ? Colors.transparent : _primary.withOpacity(0.4),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
+        )
       ),
     );
   }

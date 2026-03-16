@@ -232,4 +232,16 @@ class AppLocalizationsSi extends AppLocalizations {
 
   @override
   String get updateProfile => 'ඔබගේ විස්තර මෙහි යාවත්කාලීන කරන්න';
+
+  @override
+  String get firstName => 'මුල් නම';
+
+  @override
+  String get lastName => 'අවසන් නම';
+
+  @override
+  String get address => 'ලිපිනය';
+
+  @override
+  String get contact => 'සම්බන්ධතා අංකය';
 }

@@ -6,3 +6,4 @@ part 'master_data_event.freezed.dart';
 class MasterDataEvent with _$MasterDataEvent {
   const factory MasterDataEvent.loadMasterData() = LoadMasterData;
 }
+
