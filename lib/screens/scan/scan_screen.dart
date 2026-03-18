@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_bloc_app/bloc/scanner/scanner_bloc.dart';
-import 'package:flutter_bloc_app/bloc/scanner/scanner_event.dart';
 import 'package:flutter_bloc_app/bloc/scanner/scanner_state.dart';
 
 import '../../widgets/scanner.dart';

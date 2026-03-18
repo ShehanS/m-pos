@@ -88,7 +88,7 @@ class HomeScreen extends StatelessWidget {
                     icon: Icons.qr_code,
                     title: "Scanning",
                     color: AppTheme.primaryColor,
-                    onTap: () => context.push(RouteNames.scan),
+                    onTap: () => context.push(RouteNames.scanDispatch),
                     delay: 300,
                   )),
 
@@ -102,10 +102,10 @@ class HomeScreen extends StatelessWidget {
                 childAspectRatio: 1.2,
                 children: [
                   _ActionCard(
-                    icon: Icons.person_outline,
-                    title: l10n.profile,
+                    icon: Icons.inventory,
+                    title: "Stock",
                     color: AppTheme.primaryColor,
-                    onTap: () => context.push(RouteNames.profile),
+                    onTap: () => context.push(RouteNames.stockIn),
                     delay: 300,
                   ),
                   _ActionCard(

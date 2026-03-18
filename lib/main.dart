@@ -4,11 +4,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_bloc_app/bloc/scanner/scanner_bloc.dart';
 import 'package:flutter_bloc_app/bloc/user/user_bloc.dart';
+import 'package:flutter_bloc_app/repositories/inventory_repository.dart';
 import 'package:flutter_bloc_app/repositories/master_data_repository.dart';
 import 'package:flutter_bloc_app/repositories/user_repository.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'bloc/blocs.dart';
+import 'bloc/inventory/inventory_bloc.dart';
 import 'bloc/locale/locale_event.dart';
 import 'bloc/locale/locale_state.dart';
 import 'firebase_options.dart';
@@ -65,6 +67,9 @@ class MyApp extends StatelessWidget {
           create: (_) => MasterDataBloc(MasterDataRepositoryImpl())
             ..add(const LoadMasterData()),
         ),
+        BlocProvider<InventoryBloc>(
+            lazy: false,
+            create: (_) => InventoryBloc(InventoryRepositoryImpl())),
         BlocProvider<NotificationBloc>(
           lazy: false,
           create: (_) => NotificationBloc(

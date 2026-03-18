@@ -10,5 +10,6 @@ class RouteNames {
   static const String home = '/home';
   static const String profile = '/home/profile';
   static const String settings = '/home/settings';
-  static const String scan = '/home/scan';
+  static const String scanDispatch = '/home/scan-dispatch';
+  static const String stockIn = '/home/stockIn';
 }

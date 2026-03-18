@@ -6,9 +6,13 @@ import 'package:flutter_bloc_app/bloc/user/user_bloc.dart';
 import 'package:flutter_bloc_app/bloc/user/user_event.dart';
 import 'package:flutter_bloc_app/bloc/user/user_state.dart';
 import 'package:flutter_bloc_app/screens/profile/update_profile.dart';
+import 'package:flutter_bloc_app/screens/scan/scan_dispatch_screen.dart';
+import 'package:flutter_bloc_app/screens/stock/stock_in_screen.dart';
 import 'package:go_router/go_router.dart';
 
 import '../bloc/blocs.dart';
+import '../bloc/inventory/inventory_bloc.dart';
+import '../bloc/scanner/scanner_bloc.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/auth/forgot_password_screen.dart';
@@ -206,11 +210,26 @@ class AppRouter {
               ),
             ),
             GoRoute(
-              path: 'scan',
-              name: 'scan',
+              path: "scan-dispatch",
+              name: 'scanDispatch',
               pageBuilder: (context, state) => CustomTransitionPage(
                 key: state.pageKey,
-                child: const ScanScreen(),
+                child: MultiBlocProvider(
+                  providers: [
+                    BlocProvider.value(value: context.read<InventoryBloc>()),
+                    BlocProvider.value(value: context.read<ScannerBloc>()),
+                  ],
+                  child: const ScanDispatchScreen(),
+                ),
+                transitionsBuilder: _slideTransition,
+              ),
+            ),
+            GoRoute(
+              path: 'stockIn',
+              name: 'stockIn',
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const StockInScreen(),
                 transitionsBuilder: _slideTransition,
               ),
             ),
