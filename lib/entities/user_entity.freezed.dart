@@ -31,6 +31,7 @@ mixin _$UserEntity {
   String? get address => throw _privateConstructorUsedError;
   bool get isUpdateProfile => throw _privateConstructorUsedError;
   bool get emailVerified => throw _privateConstructorUsedError;
+  List<Business>? get business => throw _privateConstructorUsedError;
   DateTime? get createdAt => throw _privateConstructorUsedError;
   String? get fcmToken => throw _privateConstructorUsedError;
 
@@ -62,6 +63,7 @@ abstract class $UserEntityCopyWith<$Res> {
       String? address,
       bool isUpdateProfile,
       bool emailVerified,
+      List<Business>? business,
       DateTime? createdAt,
       String? fcmToken});
 }
@@ -92,6 +94,7 @@ class _$UserEntityCopyWithImpl<$Res, $Val extends UserEntity>
     Object? address = freezed,
     Object? isUpdateProfile = null,
     Object? emailVerified = null,
+    Object? business = freezed,
     Object? createdAt = freezed,
     Object? fcmToken = freezed,
   }) {
@@ -140,6 +143,10 @@ class _$UserEntityCopyWithImpl<$Res, $Val extends UserEntity>
           ? _value.emailVerified
           : emailVerified // ignore: cast_nullable_to_non_nullable
               as bool,
+      business: freezed == business
+          ? _value.business
+          : business // ignore: cast_nullable_to_non_nullable
+              as List<Business>?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -172,6 +179,7 @@ abstract class _$$UserEntityImplCopyWith<$Res>
       String? address,
       bool isUpdateProfile,
       bool emailVerified,
+      List<Business>? business,
       DateTime? createdAt,
       String? fcmToken});
 }
@@ -200,6 +208,7 @@ class __$$UserEntityImplCopyWithImpl<$Res>
     Object? address = freezed,
     Object? isUpdateProfile = null,
     Object? emailVerified = null,
+    Object? business = freezed,
     Object? createdAt = freezed,
     Object? fcmToken = freezed,
   }) {
@@ -248,6 +257,10 @@ class __$$UserEntityImplCopyWithImpl<$Res>
           ? _value.emailVerified
           : emailVerified // ignore: cast_nullable_to_non_nullable
               as bool,
+      business: freezed == business
+          ? _value._business
+          : business // ignore: cast_nullable_to_non_nullable
+              as List<Business>?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -275,9 +288,11 @@ class _$UserEntityImpl extends _UserEntity {
       this.address,
       this.isUpdateProfile = false,
       this.emailVerified = false,
+      final List<Business>? business,
       this.createdAt,
       this.fcmToken})
-      : super._();
+      : _business = business,
+        super._();
 
   factory _$UserEntityImpl.fromJson(Map<String, dynamic> json) =>
       _$$UserEntityImplFromJson(json);
@@ -306,6 +321,16 @@ class _$UserEntityImpl extends _UserEntity {
   @override
   @JsonKey()
   final bool emailVerified;
+  final List<Business>? _business;
+  @override
+  List<Business>? get business {
+    final value = _business;
+    if (value == null) return null;
+    if (_business is EqualUnmodifiableListView) return _business;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
   @override
   final DateTime? createdAt;
   @override
@@ -313,7 +338,7 @@ class _$UserEntityImpl extends _UserEntity {
 
   @override
   String toString() {
-    return 'UserEntity(uid: $uid, email: $email, username: $username, displayName: $displayName, photoUrl: $photoUrl, firstName: $firstName, lastName: $lastName, contact: $contact, address: $address, isUpdateProfile: $isUpdateProfile, emailVerified: $emailVerified, createdAt: $createdAt, fcmToken: $fcmToken)';
+    return 'UserEntity(uid: $uid, email: $email, username: $username, displayName: $displayName, photoUrl: $photoUrl, firstName: $firstName, lastName: $lastName, contact: $contact, address: $address, isUpdateProfile: $isUpdateProfile, emailVerified: $emailVerified, business: $business, createdAt: $createdAt, fcmToken: $fcmToken)';
   }
 
   @override
@@ -339,6 +364,7 @@ class _$UserEntityImpl extends _UserEntity {
                 other.isUpdateProfile == isUpdateProfile) &&
             (identical(other.emailVerified, emailVerified) ||
                 other.emailVerified == emailVerified) &&
+            const DeepCollectionEquality().equals(other._business, _business) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.fcmToken, fcmToken) ||
@@ -360,6 +386,7 @@ class _$UserEntityImpl extends _UserEntity {
       address,
       isUpdateProfile,
       emailVerified,
+      const DeepCollectionEquality().hash(_business),
       createdAt,
       fcmToken);
 
@@ -392,6 +419,7 @@ abstract class _UserEntity extends UserEntity {
       final String? address,
       final bool isUpdateProfile,
       final bool emailVerified,
+      final List<Business>? business,
       final DateTime? createdAt,
       final String? fcmToken}) = _$UserEntityImpl;
   const _UserEntity._() : super._();
@@ -421,6 +449,8 @@ abstract class _UserEntity extends UserEntity {
   bool get isUpdateProfile;
   @override
   bool get emailVerified;
+  @override
+  List<Business>? get business;
   @override
   DateTime? get createdAt;
   @override

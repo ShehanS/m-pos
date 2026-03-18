@@ -19,6 +19,9 @@ _$UserEntityImpl _$$UserEntityImplFromJson(Map<String, dynamic> json) =>
       address: json['address'] as String?,
       isUpdateProfile: json['isUpdateProfile'] as bool? ?? false,
       emailVerified: json['emailVerified'] as bool? ?? false,
+      business: (json['business'] as List<dynamic>?)
+          ?.map((e) => Business.fromJson(e as Map<String, dynamic>))
+          .toList(),
       createdAt: json['createdAt'] == null
           ? null
           : DateTime.parse(json['createdAt'] as String),
@@ -38,6 +41,7 @@ Map<String, dynamic> _$$UserEntityImplToJson(_$UserEntityImpl instance) =>
       'address': instance.address,
       'isUpdateProfile': instance.isUpdateProfile,
       'emailVerified': instance.emailVerified,
+      'business': instance.business,
       'createdAt': instance.createdAt?.toIso8601String(),
       'fcmToken': instance.fcmToken,
     };

@@ -150,7 +150,7 @@ class AppLocalizationsTa extends AppLocalizations {
   String get confirm => 'உறுதிப்படுத்தவும்';
 
   @override
-  String get delete => 'நீக்கவும்';
+  String get delete => 'அழிக்கவும்';
 
   @override
   String get validationEmailRequired => 'மின்னஞ்சல் தேவை';
@@ -244,4 +244,37 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get contact => 'தொடர்பு எண்';
+
+  @override
+  String get account => 'கணக்கு';
+
+  @override
+  String get logout => 'வெளியேறு';
+
+  @override
+  String get businessTemplate => 'வணிக வார்ப்புரு';
+
+  @override
+  String get addBusiness => 'வணிகத்தை சேர்க்கவும்';
+
+  @override
+  String get editBusiness => 'வணிகத்தை திருத்தவும்';
+
+  @override
+  String get businessType => 'வணிக வகை';
+
+  @override
+  String get businessName => 'வணிக பெயர்';
+
+  @override
+  String get logo => 'லோகோ';
+
+  @override
+  String get noBusinessTemplate => 'வணிக வார்ப்புரு இல்லை';
+
+  @override
+  String get remove => 'அகற்று';
+
+  @override
+  String get deleteMessage => 'இதனை நீக்க விரும்புகிறீர்களா?';
 }

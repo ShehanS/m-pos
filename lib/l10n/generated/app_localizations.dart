@@ -558,6 +558,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Contact'**
   String get contact;
+
+  /// No description provided for @account.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get account;
+
+  /// No description provided for @logout.
+  ///
+  /// In en, this message translates to:
+  /// **'Logout'**
+  String get logout;
+
+  /// No description provided for @businessTemplate.
+  ///
+  /// In en, this message translates to:
+  /// **'Business Template'**
+  String get businessTemplate;
+
+  /// No description provided for @addBusiness.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Business'**
+  String get addBusiness;
+
+  /// No description provided for @editBusiness.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Business'**
+  String get editBusiness;
+
+  /// No description provided for @businessType.
+  ///
+  /// In en, this message translates to:
+  /// **'Business Type'**
+  String get businessType;
+
+  /// No description provided for @businessName.
+  ///
+  /// In en, this message translates to:
+  /// **'Business Name'**
+  String get businessName;
+
+  /// No description provided for @logo.
+  ///
+  /// In en, this message translates to:
+  /// **'Logo'**
+  String get logo;
+
+  /// No description provided for @noBusinessTemplate.
+  ///
+  /// In en, this message translates to:
+  /// **'No Business Template'**
+  String get noBusinessTemplate;
+
+  /// No description provided for @remove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get remove;
+
+  /// No description provided for @deleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure to want delete'**
+  String get deleteMessage;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

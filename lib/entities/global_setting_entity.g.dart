@@ -17,12 +17,7 @@ _$GlobalSettingEntityImpl _$$GlobalSettingEntityImplFromJson(
       updatedAt: (json['updatedAt'] as num?)?.toInt(),
       createdAt: (json['createdAt'] as num?)?.toInt(),
       locale: json['locale'] as String?,
-      business: (json['business'] as List<dynamic>?)
-          ?.map((e) => FormFieldEntity.fromJson(e as String))
-          .toList(),
-      profile: (json['profile'] as List<dynamic>?)
-          ?.map((e) => FormFieldEntity.fromJson(e as String))
-          .toList(),
+      business: _businessTypeListFromJson(json['business'] as List?),
     );
 
 Map<String, dynamic> _$$GlobalSettingEntityImplToJson(
@@ -36,6 +31,5 @@ Map<String, dynamic> _$$GlobalSettingEntityImplToJson(
       'updatedAt': instance.updatedAt,
       'createdAt': instance.createdAt,
       'locale': instance.locale,
-      'business': instance.business,
-      'profile': instance.profile,
+      'business': _businessTypeListToJson(instance.business),
     };

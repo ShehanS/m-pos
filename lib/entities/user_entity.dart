@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import '../dtos/business.dart';
 
 part 'user_entity.freezed.dart';
 part 'user_entity.g.dart';
@@ -19,6 +20,7 @@ class UserEntity with _$UserEntity {
     String? address,
     @Default(false) bool isUpdateProfile,
     @Default(false) bool emailVerified,
+    List<Business>? business,
     DateTime? createdAt,
     String? fcmToken,
   }) = _UserEntity;
@@ -36,6 +38,9 @@ class UserEntity with _$UserEntity {
       address: data['address'] as String?,
       isUpdateProfile: data['isUpdateProfile'] as bool? ?? false,
       emailVerified: data['emailVerified'] as bool? ?? false,
+      business: (data['business'] as List?)
+          ?.map((e) => Business.fromJson(Map<String, dynamic>.from(e)))
+          .toList(),
       createdAt: data['createdAt'] != null
           ? (data['createdAt'] as dynamic).toDate()
           : null,
@@ -47,7 +52,7 @@ class UserEntity with _$UserEntity {
       _$UserEntityFromJson(json);
 
   Map<String, dynamic> toFirestore() {
-    final map = <String, dynamic>{
+    return {
       'uid': uid,
       'email': email,
       'isUpdateProfile': isUpdateProfile,
@@ -59,16 +64,18 @@ class UserEntity with _$UserEntity {
       if (lastName != null) 'lastName': lastName,
       if (contact != null) 'contact': contact,
       if (address != null) 'address': address,
+      if (business != null) 'business': business!.map((e) => e.toJson()).toList(),
       if (createdAt != null) 'createdAt': createdAt,
       if (fcmToken != null) 'fcmToken': fcmToken,
     };
-    return map;
   }
 
   String get initials {
     final name = displayName ?? username ?? email;
-    final parts = name.split(' ');
-    if (parts.length >= 2) {
+    if (name.isEmpty) return '?';
+
+    final parts = name.trim().split(' ');
+    if (parts.length >= 2 && parts[1].isNotEmpty) {
       return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     }
     return name.substring(0, 1).toUpperCase();

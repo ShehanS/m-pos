@@ -76,88 +76,79 @@ class _UpdateProfileState extends State<UpdateProfile> {
           ),
           body: BlocBuilder<MasterDataBloc, MasterDataState>(
             builder: (context, state) {
-              final profileForm = state.setting?.profile;
-              if (profileForm != null && profileForm.isNotEmpty) {
-                return BlocBuilder<UserBloc, UserState>(
-                  builder: (context, profileState) {
-                    if (profileState.status == UserStatus.loading) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    return Form(
-                      key: _formKey,
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              l10n.updateProfile,
-                              style: theme.textTheme.headlineSmall,
-                            ).animate().fadeIn(delay: 200.ms),
-                            const SizedBox(height: 50),
-                            CustomTextField(
-                              controller: _firstNameController,
-                              label: l10n.firstName,
-                              prefixIcon: Icons.person_outline,
-                              validator: (v) {
-                                if (v == null || v.isEmpty) return l10n.validationUsernameRequired;
-                                if (v.length < 3) return l10n.validationUsernameLength;
-                                return null;
-                              },
-                            ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.1, end: 0, delay: 300.ms),
-                            const SizedBox(height: 16),
-                            CustomTextField(
-                              controller: _lastNameController,
-                              label: l10n.lastName,
-                              prefixIcon: Icons.person_outline,
-                              validator: (v) {
-                                if (v == null || v.isEmpty) return l10n.validationUsernameRequired;
-                                if (v.length < 3) return l10n.validationUsernameLength;
-                                return null;
-                              },
-                            ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.1, end: 0, delay: 400.ms),
-                            const SizedBox(height: 16),
-                            CustomTextField(
-                              controller: _addressController,
-                              label: l10n.address,
-                              prefixIcon: Icons.location_on_outlined,
-                              validator: (v) {
-                                if (v == null || v.isEmpty) return l10n.validationUsernameRequired;
-                                if (v.length < 3) return l10n.validationUsernameLength;
-                                return null;
-                              },
-                            ).animate().fadeIn(delay: 500.ms).slideX(begin: -0.1, end: 0, delay: 500.ms),
-                            const SizedBox(height: 16),
-                            CustomTextField(
-                              controller: _contactController,
-                              label: l10n.contact,
-                              prefixIcon: Icons.phone_outlined,
-                              validator: (v) {
-                                if (v == null || v.isEmpty) return l10n.validationUsernameRequired;
-                                if (v.length < 3) return l10n.validationUsernameLength;
-                                return null;
-                              },
-                            ).animate().fadeIn(delay: 600.ms).slideX(begin: -0.1, end: 0, delay: 600.ms),
-                            const SizedBox(height: 32),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: profileState.status == UserStatus.loading ? null : _submit,
-                                child: Text(l10n.next),
-                              ),
-                            ).animate().fadeIn(delay: 700.ms),
-                          ],
-                        ),
+              return BlocBuilder<UserBloc, UserState>(
+                builder: (context, profileState) {
+                  if (profileState.status == UserStatus.loading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  return Form(
+                    key: _formKey,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.updateProfile,
+                            style: theme.textTheme.headlineSmall,
+                          ).animate().fadeIn(delay: 200.ms),
+                          const SizedBox(height: 50),
+                          CustomTextField(
+                            controller: _firstNameController,
+                            label: l10n.firstName,
+                            prefixIcon: Icons.person_outline,
+                            validator: (v) {
+                              if (v == null || v.isEmpty) return l10n.validationUsernameRequired;
+                              if (v.length < 3) return l10n.validationUsernameLength;
+                              return null;
+                            },
+                          ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.1, end: 0, delay: 300.ms),
+                          const SizedBox(height: 16),
+                          CustomTextField(
+                            controller: _lastNameController,
+                            label: l10n.lastName,
+                            prefixIcon: Icons.person_outline,
+                            validator: (v) {
+                              if (v == null || v.isEmpty) return l10n.validationUsernameRequired;
+                              if (v.length < 3) return l10n.validationUsernameLength;
+                              return null;
+                            },
+                          ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.1, end: 0, delay: 400.ms),
+                          const SizedBox(height: 16),
+                          CustomTextField(
+                            controller: _addressController,
+                            label: l10n.address,
+                            prefixIcon: Icons.location_on_outlined,
+                            validator: (v) {
+                              if (v == null || v.isEmpty) return l10n.validationUsernameRequired;
+                              if (v.length < 3) return l10n.validationUsernameLength;
+                              return null;
+                            },
+                          ).animate().fadeIn(delay: 500.ms).slideX(begin: -0.1, end: 0, delay: 500.ms),
+                          const SizedBox(height: 16),
+                          CustomTextField(
+                            controller: _contactController,
+                            label: l10n.contact,
+                            prefixIcon: Icons.phone_outlined,
+                            validator: (v) {
+                              if (v == null || v.isEmpty) return l10n.validationUsernameRequired;
+                              if (v.length < 3) return l10n.validationUsernameLength;
+                              return null;
+                            },
+                          ).animate().fadeIn(delay: 600.ms).slideX(begin: -0.1, end: 0, delay: 600.ms),
+                          const SizedBox(height: 32),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: profileState.status == UserStatus.loading ? null : _submit,
+                              child: Text(l10n.next),
+                            ),
+                          ).animate().fadeIn(delay: 700.ms),
+                        ],
                       ),
-                    );
-                  },
-                );
-              }
-
-              return const Center(
-                child: CircularProgressIndicator(
-                  color: AppTheme.primaryColor,
-                ),
+                    ),
+                  );
+                },
               );
             },
           ),

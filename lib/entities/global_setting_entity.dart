@@ -1,9 +1,14 @@
-import 'package:flutter_bloc_app/entities/form_field_entity.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import '../dtos/business_type.dart';
 
 part 'global_setting_entity.freezed.dart';
-
 part 'global_setting_entity.g.dart';
+
+List<BusinessType>? _businessTypeListFromJson(List<dynamic>? json) =>
+    json?.map((e) => BusinessType.fromJson(Map<String, dynamic>.from(e))).toList();
+
+List<Map<String, dynamic>>? _businessTypeListToJson(List<BusinessType>? list) =>
+    list?.map((e) => e.toJson()).toList();
 
 @freezed
 class GlobalSettingEntity with _$GlobalSettingEntity {
@@ -18,8 +23,8 @@ class GlobalSettingEntity with _$GlobalSettingEntity {
     int? updatedAt,
     int? createdAt,
     String? locale,
-    List<FormFieldEntity>? business,
-    List<FormFieldEntity>? profile,
+    @JsonKey(fromJson: _businessTypeListFromJson, toJson: _businessTypeListToJson)
+    List<BusinessType>? business,
   }) = _GlobalSettingEntity;
 
   factory GlobalSettingEntity.fromJson(Map<String, dynamic> json) =>
@@ -36,15 +41,8 @@ class GlobalSettingEntity with _$GlobalSettingEntity {
       createdAt: data['createdAt'] as int?,
       locale: data['locale'] as String?,
       business: (data['business'] as List?)
-          ?.map((e) => FormFieldEntity.fromMap(
-                Map<String, dynamic>.from(e),
-              ))
-          .toList(),
-      profile: (data['profile'] as List?)
-          ?.map((e) => FormFieldEntity.fromMap(
-                Map<String, dynamic>.from(e),
-              ))
-          .toList(),
+          ?.map((e) => BusinessType.fromJson(Map<String, dynamic>.from(e)))
+          .toList()
     );
   }
 
@@ -52,14 +50,13 @@ class GlobalSettingEntity with _$GlobalSettingEntity {
     return {
       'appVersion': appVersion,
       'forceUpdate': forceUpdate,
-      'introEnabled': introEnabled,
-      'tcUrl': tcUrl,
-      'tncVersion': tncVersion,
-      'updatedAt': updatedAt,
-      'createdAt': createdAt,
-      'locale': locale,
-      'business': business?.map((e) => e.toJson()).toList(),
-      'profile': profile?.map((e) => e.toJson()).toList(),
+      if (introEnabled != null) 'introEnabled': introEnabled,
+      if (tcUrl != null) 'tcUrl': tcUrl,
+      if (tncVersion != null) 'tncVersion': tncVersion,
+      if (updatedAt != null) 'updatedAt': updatedAt,
+      if (createdAt != null) 'createdAt': createdAt,
+      if (locale != null) 'locale': locale,
+      if (business != null) 'business': business!.map((e) => e.toJson()).toList(),
     };
   }
 }

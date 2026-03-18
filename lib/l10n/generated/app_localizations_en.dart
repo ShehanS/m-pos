@@ -244,4 +244,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get contact => 'Contact';
+
+  @override
+  String get account => 'Account';
+
+  @override
+  String get logout => 'Logout';
+
+  @override
+  String get businessTemplate => 'Business Template';
+
+  @override
+  String get addBusiness => 'Add Business';
+
+  @override
+  String get editBusiness => 'Edit Business';
+
+  @override
+  String get businessType => 'Business Type';
+
+  @override
+  String get businessName => 'Business Name';
+
+  @override
+  String get logo => 'Logo';
+
+  @override
+  String get noBusinessTemplate => 'No Business Template';
+
+  @override
+  String get remove => 'Remove';
+
+  @override
+  String get deleteMessage => 'Are you sure to want delete';
 }

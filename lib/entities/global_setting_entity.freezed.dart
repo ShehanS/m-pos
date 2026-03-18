@@ -28,8 +28,8 @@ mixin _$GlobalSettingEntity {
   int? get updatedAt => throw _privateConstructorUsedError;
   int? get createdAt => throw _privateConstructorUsedError;
   String? get locale => throw _privateConstructorUsedError;
-  List<FormFieldEntity>? get business => throw _privateConstructorUsedError;
-  List<FormFieldEntity>? get profile => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: _businessTypeListFromJson, toJson: _businessTypeListToJson)
+  List<BusinessType>? get business => throw _privateConstructorUsedError;
 
   /// Serializes this GlobalSettingEntity to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -56,8 +56,9 @@ abstract class $GlobalSettingEntityCopyWith<$Res> {
       int? updatedAt,
       int? createdAt,
       String? locale,
-      List<FormFieldEntity>? business,
-      List<FormFieldEntity>? profile});
+      @JsonKey(
+          fromJson: _businessTypeListFromJson, toJson: _businessTypeListToJson)
+      List<BusinessType>? business});
 }
 
 /// @nodoc
@@ -84,7 +85,6 @@ class _$GlobalSettingEntityCopyWithImpl<$Res, $Val extends GlobalSettingEntity>
     Object? createdAt = freezed,
     Object? locale = freezed,
     Object? business = freezed,
-    Object? profile = freezed,
   }) {
     return _then(_value.copyWith(
       appVersion: null == appVersion
@@ -122,11 +122,7 @@ class _$GlobalSettingEntityCopyWithImpl<$Res, $Val extends GlobalSettingEntity>
       business: freezed == business
           ? _value.business
           : business // ignore: cast_nullable_to_non_nullable
-              as List<FormFieldEntity>?,
-      profile: freezed == profile
-          ? _value.profile
-          : profile // ignore: cast_nullable_to_non_nullable
-              as List<FormFieldEntity>?,
+              as List<BusinessType>?,
     ) as $Val);
   }
 }
@@ -148,8 +144,9 @@ abstract class _$$GlobalSettingEntityImplCopyWith<$Res>
       int? updatedAt,
       int? createdAt,
       String? locale,
-      List<FormFieldEntity>? business,
-      List<FormFieldEntity>? profile});
+      @JsonKey(
+          fromJson: _businessTypeListFromJson, toJson: _businessTypeListToJson)
+      List<BusinessType>? business});
 }
 
 /// @nodoc
@@ -174,7 +171,6 @@ class __$$GlobalSettingEntityImplCopyWithImpl<$Res>
     Object? createdAt = freezed,
     Object? locale = freezed,
     Object? business = freezed,
-    Object? profile = freezed,
   }) {
     return _then(_$GlobalSettingEntityImpl(
       appVersion: null == appVersion
@@ -212,11 +208,7 @@ class __$$GlobalSettingEntityImplCopyWithImpl<$Res>
       business: freezed == business
           ? _value._business
           : business // ignore: cast_nullable_to_non_nullable
-              as List<FormFieldEntity>?,
-      profile: freezed == profile
-          ? _value._profile
-          : profile // ignore: cast_nullable_to_non_nullable
-              as List<FormFieldEntity>?,
+              as List<BusinessType>?,
     ));
   }
 }
@@ -233,10 +225,10 @@ class _$GlobalSettingEntityImpl extends _GlobalSettingEntity {
       this.updatedAt,
       this.createdAt,
       this.locale,
-      final List<FormFieldEntity>? business,
-      final List<FormFieldEntity>? profile})
+      @JsonKey(
+          fromJson: _businessTypeListFromJson, toJson: _businessTypeListToJson)
+      final List<BusinessType>? business})
       : _business = business,
-        _profile = profile,
         super._();
 
   factory _$GlobalSettingEntityImpl.fromJson(Map<String, dynamic> json) =>
@@ -259,9 +251,10 @@ class _$GlobalSettingEntityImpl extends _GlobalSettingEntity {
   final int? createdAt;
   @override
   final String? locale;
-  final List<FormFieldEntity>? _business;
+  final List<BusinessType>? _business;
   @override
-  List<FormFieldEntity>? get business {
+  @JsonKey(fromJson: _businessTypeListFromJson, toJson: _businessTypeListToJson)
+  List<BusinessType>? get business {
     final value = _business;
     if (value == null) return null;
     if (_business is EqualUnmodifiableListView) return _business;
@@ -269,19 +262,9 @@ class _$GlobalSettingEntityImpl extends _GlobalSettingEntity {
     return EqualUnmodifiableListView(value);
   }
 
-  final List<FormFieldEntity>? _profile;
-  @override
-  List<FormFieldEntity>? get profile {
-    final value = _profile;
-    if (value == null) return null;
-    if (_profile is EqualUnmodifiableListView) return _profile;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(value);
-  }
-
   @override
   String toString() {
-    return 'GlobalSettingEntity(appVersion: $appVersion, forceUpdate: $forceUpdate, introEnabled: $introEnabled, tcUrl: $tcUrl, tncVersion: $tncVersion, updatedAt: $updatedAt, createdAt: $createdAt, locale: $locale, business: $business, profile: $profile)';
+    return 'GlobalSettingEntity(appVersion: $appVersion, forceUpdate: $forceUpdate, introEnabled: $introEnabled, tcUrl: $tcUrl, tncVersion: $tncVersion, updatedAt: $updatedAt, createdAt: $createdAt, locale: $locale, business: $business)';
   }
 
   @override
@@ -303,8 +286,7 @@ class _$GlobalSettingEntityImpl extends _GlobalSettingEntity {
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.locale, locale) || other.locale == locale) &&
-            const DeepCollectionEquality().equals(other._business, _business) &&
-            const DeepCollectionEquality().equals(other._profile, _profile));
+            const DeepCollectionEquality().equals(other._business, _business));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -319,8 +301,7 @@ class _$GlobalSettingEntityImpl extends _GlobalSettingEntity {
       updatedAt,
       createdAt,
       locale,
-      const DeepCollectionEquality().hash(_business),
-      const DeepCollectionEquality().hash(_profile));
+      const DeepCollectionEquality().hash(_business));
 
   /// Create a copy of GlobalSettingEntity
   /// with the given fields replaced by the non-null parameter values.
@@ -349,8 +330,9 @@ abstract class _GlobalSettingEntity extends GlobalSettingEntity {
       final int? updatedAt,
       final int? createdAt,
       final String? locale,
-      final List<FormFieldEntity>? business,
-      final List<FormFieldEntity>? profile}) = _$GlobalSettingEntityImpl;
+      @JsonKey(
+          fromJson: _businessTypeListFromJson, toJson: _businessTypeListToJson)
+      final List<BusinessType>? business}) = _$GlobalSettingEntityImpl;
   const _GlobalSettingEntity._() : super._();
 
   factory _GlobalSettingEntity.fromJson(Map<String, dynamic> json) =
@@ -373,9 +355,8 @@ abstract class _GlobalSettingEntity extends GlobalSettingEntity {
   @override
   String? get locale;
   @override
-  List<FormFieldEntity>? get business;
-  @override
-  List<FormFieldEntity>? get profile;
+  @JsonKey(fromJson: _businessTypeListFromJson, toJson: _businessTypeListToJson)
+  List<BusinessType>? get business;
 
   /// Create a copy of GlobalSettingEntity
   /// with the given fields replaced by the non-null parameter values.

@@ -92,5 +92,18 @@
    "firstName": "முதல் பெயர்",
    "lastName": "கடைசி பெயர்",
    "address": "முகவரி",
-   "contact": "தொடர்பு எண்"
+   "contact": "தொடர்பு எண்",
+   "account": "கணக்கு",
+   "logout": "வெளியேறு",
+   "businessTemplate": "வணிக வார்ப்புரு",
+   "addBusiness": "வணிகத்தை சேர்க்கவும்",
+   "editBusiness": "வணிகத்தை திருத்தவும்",
+   "businessType": "வணிக வகை",
+   "businessName": "வணிக பெயர்",
+   "email": "மின்னஞ்சல்",
+   "logo": "லோகோ",
+   "noBusinessTemplate": "வணிக வார்ப்புரு இல்லை",
+   "remove": "அகற்று",
+   "delete": "அழிக்கவும்",
+   "deleteMessage": "இதனை நீக்க விரும்புகிறீர்களா?"
 }

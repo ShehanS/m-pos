@@ -150,7 +150,7 @@ class AppLocalizationsSi extends AppLocalizations {
   String get confirm => 'තහවුරු කරන්න';
 
   @override
-  String get delete => 'මකන්න';
+  String get delete => 'මකා දමන්න';
 
   @override
   String get validationEmailRequired => 'ඊමේල් අවශ්‍යයි';
@@ -244,4 +244,37 @@ class AppLocalizationsSi extends AppLocalizations {
 
   @override
   String get contact => 'සම්බන්ධතා අංකය';
+
+  @override
+  String get account => 'ගිණුම';
+
+  @override
+  String get logout => 'ඉවත්වීම';
+
+  @override
+  String get businessTemplate => 'ව්‍යාපාර ආකෘතිය';
+
+  @override
+  String get addBusiness => 'ව්‍යාපාරයක් එක් කරන්න';
+
+  @override
+  String get editBusiness => 'ව්‍යාපාරය සංස්කරණය කරන්න';
+
+  @override
+  String get businessType => 'ව්‍යාපාර වර්ගය';
+
+  @override
+  String get businessName => 'ව්‍යාපාර නාමය';
+
+  @override
+  String get logo => 'ලෝගෝව';
+
+  @override
+  String get noBusinessTemplate => 'ව්‍යාපාර ආකෘතියක් නොමැත';
+
+  @override
+  String get remove => 'ඉවත් කරන්න';
+
+  @override
+  String get deleteMessage => 'ඔබට මෙය මකා දැමීමට විශ්වාසද?';
 }

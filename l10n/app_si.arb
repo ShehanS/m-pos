@@ -92,5 +92,18 @@
   "firstName": "මුල් නම",
   "lastName": "අවසන් නම",
   "address": "ලිපිනය",
-  "contact": "සම්බන්ධතා අංකය"
+  "contact": "සම්බන්ධතා අංකය",
+  "account": "ගිණුම",
+  "logout": "ඉවත්වීම",
+  "businessTemplate": "ව්‍යාපාර ආකෘතිය",
+  "addBusiness": "ව්‍යාපාරයක් එක් කරන්න",
+  "editBusiness": "ව්‍යාපාරය සංස්කරණය කරන්න",
+  "businessType": "ව්‍යාපාර වර්ගය",
+  "businessName": "ව්‍යාපාර නාමය",
+  "email": "විද්‍යුත් තැපෑල",
+  "logo": "ලෝගෝව",
+  "noBusinessTemplate": "ව්‍යාපාර ආකෘතියක් නොමැත",
+  "remove": "ඉවත් කරන්න",
+  "delete": "මකා දමන්න",
+  "deleteMessage": "ඔබට මෙය මකා දැමීමට විශ්වාසද?"
 }

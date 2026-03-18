@@ -92,5 +92,19 @@
   "firstName":"First Name",
   "lastName":"Last Name",
   "address":"Address",
-  "contact":"Contact"
+  "contact":"Contact",
+  "account":"Account",
+  "logout":"Logout",
+  "businessTemplate":"Business Template",
+  "addBusiness":"Add Business",
+  "editBusiness":"Edit Business",
+  "businessType" : "Business Type",
+  "businessName" : "Business Name",
+  "email" : "Email",
+  "logo":"Logo",
+  "noBusinessTemplate":"No Business Template",
+  "remove":"Remove",
+  "delete":"Delete",
+  "deleteMessage":"Are you sure to want delete"
+
 }
