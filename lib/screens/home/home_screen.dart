@@ -20,7 +20,6 @@ class HomeScreen extends StatelessWidget {
     final authState = context.watch<AuthBloc>().state;
     final user = authState.user;
 
-
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.home),
@@ -41,9 +40,8 @@ class HomeScreen extends StatelessWidget {
             icon: CircleAvatar(
               radius: 16,
               backgroundColor: AppTheme.primaryColor,
-              backgroundImage: user?.photoUrl != null
-                  ? NetworkImage(user!.photoUrl!)
-                  : null,
+              backgroundImage:
+                  user?.photoUrl != null ? NetworkImage(user!.photoUrl!) : null,
               child: user?.photoUrl == null
                   ? Text(
                       user?.initials ?? 'U',
@@ -72,10 +70,7 @@ class HomeScreen extends StatelessWidget {
                 email: user?.email ?? '',
                 photoUrl: user?.photoUrl,
                 initials: user?.initials ?? 'U',
-              )
-                  .animate()
-                  .fadeIn(duration: 600.ms)
-                  .slideY(begin: -0.1, end: 0),
+              ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.1, end: 0),
 
               const SizedBox(height: 24),
 
@@ -86,7 +81,18 @@ class HomeScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // Quick action grid
+              SizedBox(
+                  width: double.infinity,
+                  height: 150,
+                  child: _ActionCard(
+                    icon: Icons.qr_code,
+                    title: "Scanning",
+                    color: AppTheme.primaryColor,
+                    onTap: () => context.push(RouteNames.scan),
+                    delay: 300,
+                  )),
+
+              const SizedBox(height: 12),
               GridView.count(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -186,8 +192,7 @@ class _WelcomeCard extends StatelessWidget {
           CircleAvatar(
             radius: 30,
             backgroundColor: Colors.white.withOpacity(0.2),
-            backgroundImage:
-                photoUrl != null ? NetworkImage(photoUrl!) : null,
+            backgroundImage: photoUrl != null ? NetworkImage(photoUrl!) : null,
             child: photoUrl == null
                 ? Text(
                     initials,
@@ -274,10 +279,7 @@ class _ActionCard extends StatelessWidget {
           ],
         ),
       ),
-    )
-        .animate()
-        .fadeIn(delay: Duration(milliseconds: delay))
-        .scale(
+    ).animate().fadeIn(delay: Duration(milliseconds: delay)).scale(
           begin: const Offset(0.8, 0.8),
           delay: Duration(milliseconds: delay),
           curve: Curves.easeOutBack,

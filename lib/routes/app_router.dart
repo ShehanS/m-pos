@@ -14,6 +14,7 @@ import '../screens/auth/register_screen.dart';
 import '../screens/auth/forgot_password_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/profile/profile_screen.dart';
+import '../screens/scan/scan_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/splash/splash_screen.dart';
 import '../screens/onboarding/onboarding_screen.dart';
@@ -101,8 +102,7 @@ class AppRouter {
           }
 
           if (profileState.status == UserStatus.loaded) {
-            final isUpdateProfile =
-                profileState.user?.isUpdateProfile ?? false;
+            final isUpdateProfile = profileState.user?.isUpdateProfile ?? false;
 
             if (!isUpdateProfile) {
               if (state.matchedLocation != RouteNames.updateProfile) {
@@ -205,6 +205,15 @@ class AppRouter {
                 transitionsBuilder: _slideTransition,
               ),
             ),
+            GoRoute(
+              path: 'scan',
+              name: 'scan',
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const ScanScreen(),
+                transitionsBuilder: _slideTransition,
+              ),
+            ),
           ],
         ),
       ],
@@ -217,11 +226,11 @@ class AppRouter {
   }
 
   static Widget _fadeSlideTransition(
-      BuildContext context,
-      Animation<double> animation,
-      Animation<double> secondaryAnimation,
-      Widget child,
-      ) {
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
     return FadeTransition(
       opacity: animation,
       child: SlideTransition(
@@ -236,11 +245,11 @@ class AppRouter {
   }
 
   static Widget _slideTransition(
-      BuildContext context,
-      Animation<double> animation,
-      Animation<double> secondaryAnimation,
-      Widget child,
-      ) {
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
     return SlideTransition(
       position: Tween<Offset>(
         begin: const Offset(1.0, 0),
@@ -251,11 +260,11 @@ class AppRouter {
   }
 
   static Widget _fadeTransition(
-      BuildContext context,
-      Animation<double> animation,
-      Animation<double> secondaryAnimation,
-      Widget child,
-      ) {
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
     return FadeTransition(opacity: animation, child: child);
   }
 }
