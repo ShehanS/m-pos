@@ -33,7 +33,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  BluetoothDevice? _selectedDevice;
   bool _showDeviceList = false;
 
   @override
@@ -552,7 +551,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               width: 160,
                               height: 160,
                               decoration: BoxDecoration(
-                                color: Colors.grey[100],
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
                                     color: AppTheme.primaryColor

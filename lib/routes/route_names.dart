@@ -12,4 +12,5 @@ class RouteNames {
   static const String scanDispatch = '/home/scan-dispatch';
   static const String stockIn = '/home/stockIn';
   static const String aiAssistant = '/home/ai-assistant';
+  static const String printPreview = '/home/print-preview';
 }

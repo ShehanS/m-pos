@@ -63,26 +63,41 @@ class ScannerBloc extends Bloc<ScannerEvent, ScannerState> {
         localStorageService.getData(_globalSettingsBox, _deviceAddressKey);
     final name =
         localStorageService.getData(_globalSettingsBox, _deviceNameKey);
+
+    if (address == null || address is! String || address.isEmpty) {
+      emit(state.copyWith(connectionStatus: DeviceConnectionStatus.none));
+      return;
+    }
+
     final device = BluetoothDevice(
       address: address,
-      name: name is String ? name : null,
+      name: name is String && name.isNotEmpty ? name : null,
     );
 
-    print("device auto connect ${device.name}");
-    print("device auto connecting....");
     emit(state.copyWith(
-        connectionStatus: DeviceConnectionStatus.connecting,
-        selectedDevice: device));
+      connectionStatus: DeviceConnectionStatus.connecting,
+      selectedDevice: device,
+    ));
+
     try {
-      await FlutterBluetoothPrinter.connect(device.address);
+      await FlutterBluetoothPrinter.connect(device.address)
+          .timeout(const Duration(seconds: 8));
       emit(state.copyWith(
-          connectionStatus: DeviceConnectionStatus.connected,
-          selectedDevice: device));
+        connectionStatus: DeviceConnectionStatus.connected,
+        selectedDevice: device,
+      ));
       print("device auto connected....");
+    } on TimeoutException {
+      emit(state.copyWith(
+        connectionStatus: DeviceConnectionStatus.failed,
+        selectedDevice: device,
+      ));
+      print("device auto connect timeout — device unreachable");
     } catch (e) {
       emit(state.copyWith(
-          connectionStatus: DeviceConnectionStatus.failed,
-          selectedDevice: device));
+        connectionStatus: DeviceConnectionStatus.failed,
+        selectedDevice: device,
+      ));
       print("device auto failed....$e");
     }
   }

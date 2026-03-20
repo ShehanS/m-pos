@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_bloc_app/bloc/scanner/scanner_bloc.dart';
+import 'package:flutter_bloc_app/bloc/scanner/scanner_state.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../bloc/blocs.dart';
@@ -24,7 +26,6 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(l10n.home),
         actions: [
-          // Notification icon with badge
           BlocBuilder<NotificationBloc, NotificationState>(
             builder: (context, state) {
               return NotificationBadge(
@@ -169,7 +170,8 @@ class _WelcomeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-
+    final deviceConnectionStatus =
+        context.watch<ScannerBloc>().state.connectionStatus;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -226,6 +228,24 @@ class _WelcomeCard extends StatelessWidget {
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
+                const SizedBox(height: 4),
+                Row(children: [
+                  Container(
+                    decoration: BoxDecoration(
+                        color: deviceConnectionStatus ==
+                                DeviceConnectionStatus.connecting
+                            ? Colors.amber
+                            : deviceConnectionStatus ==
+                                    DeviceConnectionStatus.connected
+                                ? Colors.green
+                                : Colors.red,
+                        shape: BoxShape.circle),
+                    child: const Padding(
+                      padding: EdgeInsets.all(5.0),
+                      child: Icon(Icons.print),
+                    ),
+                  ),
+                ]),
               ],
             ),
           ),

@@ -1,3 +1,6 @@
+import 'dart:ui' as ui;
+
+import 'package:flutter/rendering.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer.dart';
@@ -13,7 +16,7 @@ class BluetoothPrinterScreen extends StatefulWidget {
 }
 
 class _BluetoothPrinterScreenState extends State<BluetoothPrinterScreen> {
-  ReceiptController? _receiptController;
+  final GlobalKey _receiptKey = GlobalKey();
   bool _isPrinting = false;
   bool _showDeviceList = false;
 
@@ -27,17 +30,41 @@ class _BluetoothPrinterScreenState extends State<BluetoothPrinterScreen> {
       return;
     }
 
-    if (_receiptController == null) return;
-
     setState(() => _isPrinting = true);
 
     try {
-      await _receiptController!.print(
+      final boundary = _receiptKey.currentContext?.findRenderObject()
+      as RenderRepaintBoundary?;
+
+      if (boundary == null) throw Exception('Could not capture receipt image');
+
+      // pixelRatio: 1.0 keeps image at exact widget pixel size
+      // so imageWidth matches the 576px container exactly
+      final ui.Image image = await boundary.toImage(pixelRatio: 1.0);
+      final byteData =
+      await image.toByteData(format: ui.ImageByteFormat.png);
+
+      if (byteData == null) throw Exception('Failed to convert image');
+
+      final imageBytes = byteData.buffer.asUint8List();
+
+      await FlutterBluetoothPrinter.printImageSingle(
         address: selectedDevice.address,
+        imageBytes: imageBytes,
+        imageWidth: image.width,
+        imageHeight: image.height,
+        paperSize: PaperSize.mm58,
+        keepConnected: false,
+        addFeeds: 1,
+        cutPaper: false,
       );
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Printed successfully!')),
+          const SnackBar(
+            content: Text('Printed successfully!'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
@@ -67,11 +94,9 @@ class _BluetoothPrinterScreenState extends State<BluetoothPrinterScreen> {
               const Divider(height: 1),
               Expanded(
                 child: SingleChildScrollView(
-                  child: Receipt(
-                    builder: (context) => _buildReceiptContent(),
-                    onInitialized: (controller) {
-                      _receiptController = controller;
-                    },
+                  child: RepaintBoundary(
+                    key: _receiptKey,
+                    child: _buildReceiptContent(),
                   ),
                 ),
               ),
@@ -106,8 +131,7 @@ class _BluetoothPrinterScreenState extends State<BluetoothPrinterScreen> {
                 : 'Tap to scan and select a printer',
           ),
           trailing: TextButton.icon(
-            onPressed: () =>
-                setState(() => _showDeviceList = !_showDeviceList),
+            onPressed: () => setState(() => _showDeviceList = !_showDeviceList),
             icon: Icon(_showDeviceList
                 ? Icons.expand_less
                 : Icons.bluetooth_searching),
@@ -184,11 +208,9 @@ class _BluetoothPrinterScreenState extends State<BluetoothPrinterScreen> {
                 trailing: isSelected
                     ? const Icon(Icons.check_circle, color: Colors.green)
                     : const Icon(Icons.radio_button_unchecked,
-                    color: Colors.grey),
+                        color: Colors.grey),
                 onTap: () {
-                  context
-                      .read<ScannerBloc>()
-                      .add(SelectDevice(device: device));
+                  context.read<ScannerBloc>().add(SelectDevice(device: device));
                   setState(() => _showDeviceList = false);
                 },
               );
@@ -209,11 +231,11 @@ class _BluetoothPrinterScreenState extends State<BluetoothPrinterScreen> {
         ),
         icon: _isPrinting
             ? const SizedBox(
-          width: 18,
-          height: 18,
-          child: CircularProgressIndicator(
-              strokeWidth: 2, color: Colors.white),
-        )
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: Colors.white),
+              )
             : const Icon(Icons.print),
         label: Text(_isPrinting ? 'Printing...' : 'Print Receipt'),
       ),
@@ -221,43 +243,96 @@ class _BluetoothPrinterScreenState extends State<BluetoothPrinterScreen> {
   }
 
   Widget _buildReceiptContent() {
-    return Padding(
-      padding: const EdgeInsets.all(8),
+    return Container(
+      width: 576,
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Center(
+            child: Image.asset(
+              "assets/images/logo.png",
+              width: 200,
+              height: 200,
+            ),
+          ),
           const Text(
             'MY STORE',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 25,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          const Text(
+            'මගේ වෙළඳසැල / என் கடை',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 20, color: Colors.black),
           ),
           const SizedBox(height: 4),
-          const Text('123 Main Street, Colombo'),
-          const Text('Tel: +94 11 234 5678'),
-          const Divider(),
-          const SizedBox(height: 4),
-          _receiptRow('Item A', 'LKR 500.00'),
-          _receiptRow('Item B', 'LKR 300.00'),
-          _receiptRow('Item C', 'LKR 200.00'),
-          const Divider(),
-          _receiptRow('TOTAL', 'LKR 1000.00', bold: true),
+          const Text(
+            '123 Main Street, Colombo',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16, color: Colors.black),
+          ),
+          const Text(
+            'Tel: +94 11 234 5678',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16, color: Colors.black),
+          ),
           const SizedBox(height: 8),
-          const Text('Thank you for your purchase!'),
-          const Text('Please come again'),
-          const SizedBox(height: 16),
+          _dashedDivider(),
+          const SizedBox(height: 4),
+          _receiptRow('Item A / අයිතමය A', 'LKR 500.00'),
+          _receiptRow('Item B / அயிதமய B', 'LKR 300.00'),
+          _receiptRow('Item C / අයිතමය C', 'LKR 200.00'),
+          const SizedBox(height: 4),
+          _dashedDivider(),
+          const SizedBox(height: 4),
+          _receiptRow('TOTAL / එකතුව', 'LKR 1000.00', bold: true),
+          const SizedBox(height: 20),
+          const Text(
+            'Thank you! / ස්තූතියි! / நன்றி!',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 20, color: Colors.black),
+          ),
+          const Text(
+            'Please come again',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+          const SizedBox(height: 40),
         ],
       ),
     );
   }
 
+  Widget _dashedDivider() {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 4),
+      child: Text(
+        '- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -',
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 10, color: Colors.grey),
+        maxLines: 1,
+        overflow: TextOverflow.clip,
+      ),
+    );
+  }
+
   Widget _receiptRow(String label, String value, {bool bold = false}) {
-    final style =
-    bold ? const TextStyle(fontWeight: FontWeight.bold) : const TextStyle();
+    final style = bold
+        ? const TextStyle(
+            fontWeight: FontWeight.bold, fontSize: 20, color: Colors.black)
+        : const TextStyle(fontSize: 20, color: Colors.black);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: style),
+          Expanded(child: Text(label, style: style)),
           Text(value, style: style),
         ],
       ),

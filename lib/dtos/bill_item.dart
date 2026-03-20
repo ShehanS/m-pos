@@ -1,12 +1,15 @@
 import '../../entities/item_entity.dart';
 import '../../entities/lot_entity.dart';
 
+enum DiscountType { flat, percentage }
+
 class BillItem {
   final ItemEntity item;
   final List<LotEntity> lots;
   int quantity;
   double sellingPrice;
   double discount;
+  DiscountType discountType;
 
   BillItem({
     required this.item,
@@ -14,24 +17,23 @@ class BillItem {
     required this.quantity,
     required this.sellingPrice,
     this.discount = 0,
+    this.discountType = DiscountType.flat,
   });
 
-  double get unitCost {
-    if (lots.isEmpty) return 0;
-    double total = 0;
-    int remaining = quantity;
-    for (final lot in lots) {
-      if (remaining <= 0) break;
-      final take = remaining <= lot.quantityRemaining
-          ? remaining
-          : lot.quantityRemaining;
-      total += take * lot.unitPrice;
-      remaining -= take;
+  double get subtotal => quantity * sellingPrice;
+
+  double get discountAmount {
+    if (discount <= 0) return 0;
+    if (discountType == DiscountType.percentage) {
+      return subtotal * (discount / 100);
     }
-    return total;
+    return discount;
   }
 
-  double get subtotal => quantity * sellingPrice;
-  double get discountAmount => discount;
   double get total => subtotal - discountAmount;
+
+  double get flatDiscountValue =>
+      discountType == DiscountType.percentage
+          ? subtotal * (discount / 100)
+          : discount;
 }

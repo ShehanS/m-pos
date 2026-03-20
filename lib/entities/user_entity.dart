@@ -23,6 +23,7 @@ class UserEntity with _$UserEntity {
     List<Business>? business,
     DateTime? createdAt,
     String? fcmToken,
+    String? activeBusiness,
   }) = _UserEntity;
 
   factory UserEntity.fromFirestore(Map<String, dynamic> data) {
@@ -36,6 +37,7 @@ class UserEntity with _$UserEntity {
       lastName: data['lastName'] as String?,
       contact: data['contact'] as String?,
       address: data['address'] as String?,
+      activeBusiness: data['activeBusiness'] as String?,
       isUpdateProfile: data['isUpdateProfile'] as bool? ?? false,
       emailVerified: data['emailVerified'] as bool? ?? false,
       business: (data['business'] as List?)
@@ -57,6 +59,7 @@ class UserEntity with _$UserEntity {
       'email': email,
       'isUpdateProfile': isUpdateProfile,
       'emailVerified': emailVerified,
+      'activeBusiness' : activeBusiness,
       if (username != null) 'username': username,
       if (displayName != null) 'displayName': displayName,
       if (photoUrl != null) 'photoUrl': photoUrl,

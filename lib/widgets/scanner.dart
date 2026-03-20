@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_bloc_app/bloc/scanner/scanner_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../bloc/scanner/scanner_event.dart';
@@ -138,6 +139,17 @@ class _ScannerDialogState extends State<ScannerDialog> {
                     )
                   : const SizedBox.shrink(),
             ),
+          ),
+          Positioned(
+            bottom: 10,
+            left: 0,
+            right: 0,
+            child: Center(
+                child: ElevatedButton(
+                    onPressed: () {
+                      context.pop();
+                    },
+                    child: const Text("Exit"))),
           ),
         ],
       ),

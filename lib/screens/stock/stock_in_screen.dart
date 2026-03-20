@@ -10,6 +10,7 @@ import '../../bloc/inventory/inventory_state.dart';
 import '../../bloc/scanner/scanner_bloc.dart';
 import '../../bloc/scanner/scanner_event.dart';
 import '../../bloc/scanner/scanner_state.dart';
+import '../../dtos/bill_item.dart';
 import '../../entities/item_entity.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/custom_dropdown.dart';
@@ -700,7 +701,7 @@ class _StockInScreenState extends State<StockInScreen> {
     final poController = TextEditingController();
     final unitPriceController = TextEditingController();
     final sellingPriceController = TextEditingController();
-    final discountController = TextEditingController();
+    final discountController = TextEditingController(text: '0');
     final qtyController = TextEditingController();
     final notesController = TextEditingController();
     final dateController =
@@ -712,164 +713,329 @@ class _StockInScreenState extends State<StockInScreen> {
     String? selectedItemId =
         preSelectedItemId ?? (items.isNotEmpty ? items.first.itemId : null);
     DateTime selectedDate = DateTime.now();
+    DiscountType discountType = DiscountType.flat;
 
     _showFullScreen(
       context: context,
       child: StatefulBuilder(
-        builder: (ctx, setDialogState) => _buildFormScaffold(
-          title: 'Add Stock',
-          dialogContext: ctx,
-          actions: [
-            TextButton(
-              onPressed: () {
-                if (!formKey.currentState!.validate()) return;
-                context.read<InventoryBloc>().add(
-                      AddStock(
-                        itemId: selectedItemId!,
-                        poNumber: poController.text.trim(),
-                        unitPrice:
-                            double.parse(unitPriceController.text.trim()),
-                        quantity: int.parse(qtyController.text.trim()),
-                        receivedDate: selectedDate,
-                        sellingPrice:
-                            double.parse(sellingPriceController.text.trim()),
-                        discount: double.parse(discountController.text.trim()),
-                        createdBy: user?.uid ?? '',
-                        notes: notesController.text.trim().isEmpty
-                            ? null
-                            : notesController.text.trim(),
-                      ),
-                    );
-                Navigator.pop(ctx);
-              },
-              child: const Text('Save'),
-            ),
-          ],
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Form(
-              key: formKey,
-              child: Column(
-                children: [
-                  CustomDropdown<String>(
-                    value: selectedItemId,
-                    label: 'Item *',
-                    prefixIcon: Icons.inventory_2_outlined,
-                    items: items
-                        .map((item) => DropdownMenuItem(
-                              value: item.itemId,
-                              child: Text(
-                                item.variant != null
-                                    ? '${item.name} — ${item.variant}'
-                                    : item.name,
-                              ),
-                            ))
-                        .toList(),
-                    onChanged: (val) =>
-                        setDialogState(() => selectedItemId = val),
-                    validator: (v) =>
-                        v == null ? 'Please select an item' : null,
-                  ),
-                  const SizedBox(height: 16),
-                  CustomTextField(
-                    controller: poController,
-                    label: 'Batch / PO Number',
-                    prefixIcon: Icons.receipt_long_outlined,
-                  ),
-                  const SizedBox(height: 16),
-                  CustomTextField(
-                    controller: unitPriceController,
-                    label: 'Unit Price *',
-                    prefixIcon: Icons.attach_money_outlined,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'Required';
-                      if (double.tryParse(v) == null) return 'Invalid price';
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  CustomTextField(
-                    controller: sellingPriceController,
-                    label: 'Selling Price *',
-                    prefixIcon: Icons.sell_outlined,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'Required';
-                      if (double.tryParse(v) == null) return 'Invalid price';
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  CustomTextField(
-                    controller: discountController,
-                    label: 'Discount (optional)',
-                    prefixIcon: Icons.discount_outlined,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return null;
-                      if (double.tryParse(v) == null) {
-                        return 'Invalid discount';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  CustomTextField(
-                    controller: qtyController,
-                    label: 'Quantity *',
-                    prefixIcon: Icons.numbers_outlined,
-                    keyboardType: TextInputType.number,
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'Required';
-                      final qty = int.tryParse(v);
-                      if (qty == null || qty <= 0) {
-                        return 'Must be greater than 0';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  GestureDetector(
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: ctx,
-                        initialDate: selectedDate,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime.now(),
+        builder: (ctx, setDialogState) {
+          final sellingPrice =
+              double.tryParse(sellingPriceController.text) ?? 0;
+          final discountValue = double.tryParse(discountController.text) ?? 0;
+          final discountAmount = discountType == DiscountType.percentage
+              ? sellingPrice * (discountValue / 100)
+              : discountValue;
+          final effectivePrice = sellingPrice - discountAmount;
+
+          return _buildFormScaffold(
+            title: 'Add Stock',
+            dialogContext: ctx,
+            actions: [
+              TextButton(
+                onPressed: () {
+                  if (!formKey.currentState!.validate()) return;
+                  final finalSellingPrice =
+                      double.parse(sellingPriceController.text.trim());
+                  final finalDiscountValue =
+                      double.tryParse(discountController.text.trim()) ?? 0;
+                  final flatDiscount = discountType == DiscountType.percentage
+                      ? finalSellingPrice * (finalDiscountValue / 100)
+                      : finalDiscountValue;
+
+                  context.read<InventoryBloc>().add(
+                        AddStock(
+                          itemId: selectedItemId!,
+                          poNumber: poController.text.trim(),
+                          unitPrice:
+                              double.parse(unitPriceController.text.trim()),
+                          sellingPrice: finalSellingPrice,
+                          quantity: int.parse(qtyController.text.trim()),
+                          receivedDate: selectedDate,
+                          createdBy: user?.uid ?? '',
+                          discount: flatDiscount <= 0 ? 0.00 : flatDiscount,
+                          notes: notesController.text.trim().isEmpty
+                              ? null
+                              : notesController.text.trim(),
+                        ),
                       );
-                      if (picked != null) {
-                        setDialogState(() {
-                          selectedDate = picked;
-                          dateController.text =
-                              DateFormat.yMMMd().format(picked);
-                        });
-                      }
-                    },
-                    child: AbsorbPointer(
-                      child: CustomTextField(
-                        controller: dateController,
-                        label: 'Received Date',
-                        prefixIcon: Icons.calendar_today_outlined,
-                        suffixIcon: const Icon(Icons.arrow_drop_down),
-                        validator: (v) =>
-                            v == null || v.trim().isEmpty ? 'Required' : null,
+                  Navigator.pop(ctx);
+                },
+                child: const Text('Save'),
+              ),
+            ],
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  children: [
+                    CustomDropdown<String>(
+                      value: selectedItemId,
+                      label: 'Item *',
+                      prefixIcon: Icons.inventory_2_outlined,
+                      items: items
+                          .map((item) => DropdownMenuItem(
+                                value: item.itemId,
+                                child: Text(
+                                  item.variant != null
+                                      ? '${item.name} — ${item.variant}'
+                                      : item.name,
+                                ),
+                              ))
+                          .toList(),
+                      onChanged: (val) =>
+                          setDialogState(() => selectedItemId = val),
+                      validator: (v) =>
+                          v == null ? 'Please select an item' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    CustomTextField(
+                      controller: poController,
+                      label: 'Batch / PO Number',
+                      prefixIcon: Icons.receipt_long_outlined,
+                    ),
+                    const SizedBox(height: 16),
+                    CustomTextField(
+                      controller: unitPriceController,
+                      label: 'Unit Price (Cost) *',
+                      prefixIcon: Icons.attach_money_outlined,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'Required';
+                        if (double.tryParse(v) == null) return 'Invalid price';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    CustomTextField(
+                      controller: sellingPriceController,
+                      label: 'Selling Price *',
+                      prefixIcon: Icons.sell_outlined,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'Required';
+                        if (double.tryParse(v) == null) return 'Invalid price';
+                        return null;
+                      },
+                      onEditingComplete: () => setDialogState(() {}),
+                    ),
+                    const SizedBox(height: 16),
+                    // ── Discount field + type toggle ──────────────────
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: CustomTextField(
+                            controller: discountController,
+                            label: discountType == DiscountType.percentage
+                                ? 'Discount % (optional)'
+                                : 'Discount flat (optional)',
+                            prefixIcon: Icons.discount_outlined,
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
+                            validator: (v) {
+                              if (v == null || v.trim().isEmpty) return null;
+                              final d = double.tryParse(v);
+                              if (d == null) return 'Invalid value';
+                              if (discountType == DiscountType.percentage &&
+                                  d > 100) return 'Max 100%';
+                              if (d < 0) return 'Cannot be negative';
+                              return null;
+                            },
+                            onEditingComplete: () => setDialogState(() {}),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Column(
+                          children: [
+                            const Text(
+                              'Type',
+                              style:
+                                  TextStyle(fontSize: 11, color: Colors.grey),
+                            ),
+                            const SizedBox(height: 4),
+                            Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                    color:
+                                        AppTheme.primaryColor.withOpacity(0.3)),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _buildDiscountTypeBtn(
+                                    label: 'Flat',
+                                    selected: discountType == DiscountType.flat,
+                                    onTap: () => setDialogState(
+                                        () => discountType = DiscountType.flat),
+                                  ),
+                                  _buildDiscountTypeBtn(
+                                    label: '%',
+                                    selected:
+                                        discountType == DiscountType.percentage,
+                                    onTap: () => setDialogState(() =>
+                                        discountType = DiscountType.percentage),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    // ── Live price preview ────────────────────────────
+                    if (sellingPrice > 0) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                              color: AppTheme.primaryColor.withOpacity(0.15)),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('Selling Price',
+                                    style: TextStyle(
+                                        fontSize: 13, color: Colors.grey)),
+                                Text(sellingPrice.toStringAsFixed(2),
+                                    style: const TextStyle(fontSize: 13)),
+                              ],
+                            ),
+                            if (discountAmount > 0) ...[
+                              const SizedBox(height: 6),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    discountType == DiscountType.percentage
+                                        ? 'Discount (${discountValue.toStringAsFixed(0)}% of ${sellingPrice.toStringAsFixed(2)})'
+                                        : 'Discount (flat)',
+                                    style: const TextStyle(
+                                        fontSize: 13, color: Colors.orange),
+                                  ),
+                                  Text(
+                                    '- ${discountAmount.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                        fontSize: 13, color: Colors.orange),
+                                  ),
+                                ],
+                              ),
+                            ],
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 6),
+                              child: Divider(height: 1),
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Effective Price',
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600),
+                                ),
+                                Text(
+                                  effectivePrice.toStringAsFixed(2),
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    CustomTextField(
+                      controller: qtyController,
+                      label: 'Quantity *',
+                      prefixIcon: Icons.numbers_outlined,
+                      keyboardType: TextInputType.number,
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'Required';
+                        final qty = int.tryParse(v);
+                        if (qty == null || qty <= 0) {
+                          return 'Must be greater than 0';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    GestureDetector(
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: ctx,
+                          initialDate: selectedDate,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime.now(),
+                        );
+                        if (picked != null) {
+                          setDialogState(() {
+                            selectedDate = picked;
+                            dateController.text =
+                                DateFormat.yMMMd().format(picked);
+                          });
+                        }
+                      },
+                      child: AbsorbPointer(
+                        child: CustomTextField(
+                          controller: dateController,
+                          label: 'Received Date',
+                          prefixIcon: Icons.calendar_today_outlined,
+                          suffixIcon: const Icon(Icons.arrow_drop_down),
+                          validator: (v) =>
+                              v == null || v.trim().isEmpty ? 'Required' : null,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  CustomTextField(
-                    controller: notesController,
-                    label: 'Notes (optional)',
-                    prefixIcon: Icons.notes_outlined,
-                    maxLines: 3,
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    CustomTextField(
+                      controller: notesController,
+                      label: 'Notes (optional)',
+                      prefixIcon: Icons.notes_outlined,
+                      maxLines: 3,
+                    ),
+                  ],
+                ),
               ),
             ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildDiscountTypeBtn({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? AppTheme.primaryColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(7),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: selected ? Colors.white : AppTheme.primaryColor,
           ),
         ),
       ),
@@ -905,18 +1071,19 @@ class _StockInScreenState extends State<StockInScreen> {
                 );
                 if (scanned != null && scanned.isNotEmpty && context.mounted) {
                   context.read<InventoryBloc>().add(
-                    DispatchByBarcode(
-                      barcode: scanned,
-                      quantity: int.parse(qtyController.text.trim()),
-                      createdBy: user?.uid ?? '',
-                      dispatchedTo: dispatchedToController.text.trim().isEmpty
-                          ? null
-                          : dispatchedToController.text.trim(),
-                      notes: notesController.text.trim().isEmpty
-                          ? null
-                          : notesController.text.trim(),
-                    ),
-                  );
+                        DispatchByBarcode(
+                          barcode: scanned,
+                          quantity: int.parse(qtyController.text.trim()),
+                          createdBy: user?.uid ?? '',
+                          dispatchedTo:
+                              dispatchedToController.text.trim().isEmpty
+                                  ? null
+                                  : dispatchedToController.text.trim(),
+                          notes: notesController.text.trim().isEmpty
+                              ? null
+                              : notesController.text.trim(),
+                        ),
+                      );
                 }
               },
             ),

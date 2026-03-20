@@ -26,6 +26,7 @@ _$UserEntityImpl _$$UserEntityImplFromJson(Map<String, dynamic> json) =>
           ? null
           : DateTime.parse(json['createdAt'] as String),
       fcmToken: json['fcmToken'] as String?,
+      activeBusiness: json['activeBusiness'] as String?,
     );
 
 Map<String, dynamic> _$$UserEntityImplToJson(_$UserEntityImpl instance) =>
@@ -44,4 +45,5 @@ Map<String, dynamic> _$$UserEntityImplToJson(_$UserEntityImpl instance) =>
       'business': instance.business,
       'createdAt': instance.createdAt?.toIso8601String(),
       'fcmToken': instance.fcmToken,
+      'activeBusiness': instance.activeBusiness,
     };

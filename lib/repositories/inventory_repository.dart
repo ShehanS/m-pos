@@ -144,6 +144,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
         lotId: lotRef.id,
         itemId: itemId,
         poNumber: poNumber,
+        discount: discount,
         unitPrice: unitPrice,
         quantityReceived: quantity,
         quantityRemaining: quantity,
@@ -151,6 +152,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
         status: 'active',
         notes: notes,
         createdBy: createdBy,
+        sellingPrice: sellingPrice,
         createdAt: DateTime.now(),
       );
 

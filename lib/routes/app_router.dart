@@ -9,6 +9,7 @@ import 'package:flutter_bloc_app/screens/ai_assistant.dart';
 import 'package:flutter_bloc_app/screens/profile/update_profile.dart';
 import 'package:flutter_bloc_app/screens/scan/scan_dispatch_screen.dart';
 import 'package:flutter_bloc_app/screens/stock/stock_in_screen.dart';
+import 'package:flutter_bloc_app/widgets/print_template.dart';
 import 'package:go_router/go_router.dart';
 
 import '../bloc/blocs.dart';
@@ -243,7 +244,7 @@ class AppRouter {
                 child: const BluetoothPrinterScreen(),
                 transitionsBuilder: _slideTransition,
               ),
-            ),
+            )
           ],
         ),
       ],
