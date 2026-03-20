@@ -48,7 +48,8 @@ class AppLocalizationsSi extends AppLocalizations {
   String get forgotPasswordTitle => 'මුරපදය යළි සකසන්න';
 
   @override
-  String get forgotPasswordSubtitle => 'යළි සකසන ලිපිය ලබා ගැනීමට ඔබේ ඊමේල් ඇතුළු කරන්න';
+  String get forgotPasswordSubtitle =>
+      'යළි සකසන ලිපිය ලබා ගැනීමට ඔබේ ඊමේල් ඇතුළු කරන්න';
 
   @override
   String get sendResetLink => 'යළි සකස් කිරීමේ සබැඳිය යවන්න';
@@ -171,19 +172,22 @@ class AppLocalizationsSi extends AppLocalizations {
   String get validationUsernameRequired => 'පරිශීලක නාමය අවශ්‍යයි';
 
   @override
-  String get validationUsernameLength => 'පරිශීලක නාමය අකුරු 3 ක් වත් විය යුතුය';
+  String get validationUsernameLength =>
+      'පරිශීලක නාමය අකුරු 3 ක් වත් විය යුතුය';
 
   @override
   String get onboardingTitle1 => 'සම්බන්ධ වී සිටින්න';
 
   @override
-  String get onboardingSubtitle1 => 'තත්‍ය කාලීන දැනුම්දීම් සහ යාවත්කාලීන ලබා ගන්න';
+  String get onboardingSubtitle1 =>
+      'තත්‍ය කාලීන දැනුම්දීම් සහ යාවත්කාලීන ලබා ගන්න';
 
   @override
   String get onboardingTitle2 => 'බහු භාෂා';
 
   @override
-  String get onboardingSubtitle2 => 'ඉංග්‍රීසි, සිංහල සහ දෙමළ භාෂාවලින් ලබා ගත හැක';
+  String get onboardingSubtitle2 =>
+      'ඉංග්‍රීසි, සිංහල සහ දෙමළ භාෂාවලින් ලබා ගත හැක';
 
   @override
   String get onboardingTitle3 => 'ආරක්ෂිතයි';
@@ -213,7 +217,8 @@ class AppLocalizationsSi extends AppLocalizations {
   String get notificationPermission => 'දැනුම්දීම් සබල කරන්න';
 
   @override
-  String get notificationPermissionDesc => 'වැදගත් යාවත්කාලීන සහ ඇඟවීම් ලබා ගන්න';
+  String get notificationPermissionDesc =>
+      'වැදගත් යාවත්කාලීන සහ ඇඟවීම් ලබා ගන්න';
 
   @override
   String get enable => 'සබල කරන්න';

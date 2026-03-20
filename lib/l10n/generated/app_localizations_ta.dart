@@ -48,7 +48,8 @@ class AppLocalizationsTa extends AppLocalizations {
   String get forgotPasswordTitle => 'கடவுச்சொல்லை மீட்டமைக்கவும்';
 
   @override
-  String get forgotPasswordSubtitle => 'மீட்டமைப்பு இணைப்பைப் பெற உங்கள் மின்னஞ்சலை உள்ளிடவும்';
+  String get forgotPasswordSubtitle =>
+      'மீட்டமைப்பு இணைப்பைப் பெற உங்கள் மின்னஞ்சலை உள்ளிடவும்';
 
   @override
   String get sendResetLink => 'மீட்டமைப்பு இணைப்பை அனுப்பவும்';
@@ -162,7 +163,8 @@ class AppLocalizationsTa extends AppLocalizations {
   String get validationPasswordRequired => 'கடவுச்சொல் தேவை';
 
   @override
-  String get validationPasswordLength => 'கடவுச்சொல் குறைந்தது 6 எழுத்துகள் இருக்க வேண்டும்';
+  String get validationPasswordLength =>
+      'கடவுச்சொல் குறைந்தது 6 எழுத்துகள் இருக்க வேண்டும்';
 
   @override
   String get validationPasswordMatch => 'கடவுச்சொற்கள் பொருந்தவில்லை';
@@ -171,25 +173,29 @@ class AppLocalizationsTa extends AppLocalizations {
   String get validationUsernameRequired => 'பயனர்பெயர் தேவை';
 
   @override
-  String get validationUsernameLength => 'பயனர்பெயர் குறைந்தது 3 எழுத்துகள் இருக்க வேண்டும்';
+  String get validationUsernameLength =>
+      'பயனர்பெயர் குறைந்தது 3 எழுத்துகள் இருக்க வேண்டும்';
 
   @override
   String get onboardingTitle1 => 'இணைந்திருங்கள்';
 
   @override
-  String get onboardingSubtitle1 => 'நிகழ்நேர அறிவிப்புகள் மற்றும் புதுப்பிப்புகளைப் பெறுங்கள்';
+  String get onboardingSubtitle1 =>
+      'நிகழ்நேர அறிவிப்புகள் மற்றும் புதுப்பிப்புகளைப் பெறுங்கள்';
 
   @override
   String get onboardingTitle2 => 'பல மொழி';
 
   @override
-  String get onboardingSubtitle2 => 'ஆங்கிலம், சிங்களம் மற்றும் தமிழில் கிடைக்கிறது';
+  String get onboardingSubtitle2 =>
+      'ஆங்கிலம், சிங்களம் மற்றும் தமிழில் கிடைக்கிறது';
 
   @override
   String get onboardingTitle3 => 'பாதுகாப்பான';
 
   @override
-  String get onboardingSubtitle3 => 'Firebase Authentication மூலம் பாதுகாக்கப்பட்டது';
+  String get onboardingSubtitle3 =>
+      'Firebase Authentication மூலம் பாதுகாக்கப்பட்டது';
 
   @override
   String get getStarted => 'தொடங்குங்கள்';
@@ -213,7 +219,8 @@ class AppLocalizationsTa extends AppLocalizations {
   String get notificationPermission => 'அறிவிப்புகளை இயக்கவும்';
 
   @override
-  String get notificationPermissionDesc => 'முக்கியமான புதுப்பிப்புகள் மற்றும் எச்சரிக்கைகளைப் பெறுங்கள்';
+  String get notificationPermissionDesc =>
+      'முக்கியமான புதுப்பிப்புகள் மற்றும் எச்சரிக்கைகளைப் பெறுங்கள்';
 
   @override
   String get enable => 'இயக்கவும்';

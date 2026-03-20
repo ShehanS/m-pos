@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_bloc_app/bloc/scanner/scanner_bloc.dart';
+import 'package:flutter_bloc_app/bloc/scanner/scanner_event.dart';
 import 'package:flutter_bloc_app/bloc/user/user_bloc.dart';
 import 'package:flutter_bloc_app/repositories/inventory_repository.dart';
 import 'package:flutter_bloc_app/repositories/master_data_repository.dart';
@@ -30,6 +31,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
   final notificationService = NotificationService();
   await LocalStorageService.instance.init();
   runApp(MyApp(notificationService: notificationService));
@@ -78,7 +80,7 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<ScannerBloc>(
           lazy: false,
-          create: (_) => ScannerBloc(),
+          create: (_) => ScannerBloc()..add(const DeviceAutoConnect()),
         ),
       ],
       child: BlocBuilder<LocaleBloc, LocaleState>(

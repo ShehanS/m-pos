@@ -4,10 +4,13 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_bloc_app/bloc/scanner/scanner_bloc.dart';
+import 'package:flutter_bloc_app/bloc/scanner/scanner_event.dart';
 import 'package:flutter_bloc_app/bloc/user/user_bloc.dart';
 import 'package:flutter_bloc_app/bloc/user/user_event.dart';
 import 'package:flutter_bloc_app/bloc/user/user_state.dart';
 import 'package:flutter_bloc_app/widgets/custom_dropdown.dart';
+import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -22,8 +25,16 @@ import '../../l10n/app_localizations.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/custom_text_field.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  BluetoothDevice? _selectedDevice;
+  bool _showDeviceList = false;
 
   @override
   Widget build(BuildContext context) {
@@ -84,8 +95,14 @@ class SettingsScreen extends StatelessWidget {
               .fadeIn(delay: 700.ms)
               .slideX(begin: -0.05, end: 0, delay: 700.ms),
           const SizedBox(height: 24),
-          _SectionHeader(title: l10n.account).animate().fadeIn(delay: 600.ms),
+          _SectionHeader(title: "Printer Setting")
+              .animate()
+              .fadeIn(delay: 400.ms),
           const SizedBox(height: 12),
+          _buildDeviceSection(),
+          const SizedBox(height: 24),
+          _SectionHeader(title: l10n.account).animate().fadeIn(delay: 600.ms),
+          const SizedBox(height: 24),
           _SettingsTile(
             icon: Icons.logout_rounded,
             title: l10n.signOut,
@@ -93,7 +110,133 @@ class SettingsScreen extends StatelessWidget {
             titleColor: Colors.red,
             onTap: () => _showSignOutDialog(context, l10n),
           ).animate().fadeIn(delay: 700.ms).slideX(begin: -0.05, end: 0, delay: 700.ms),
+
         ],
+      ),
+    );
+  }
+
+  Widget _buildDeviceSection() {
+    final selectedDevice = context.watch<ScannerBloc>().state.selectedDevice;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: ListTile(
+            leading: Icon(
+              selectedDevice != null ? Icons.print : Icons.print_outlined,
+              color: selectedDevice != null ? Colors.green : AppTheme.primaryColor,
+            ),
+            title: Text(
+              selectedDevice != null
+                  ? (selectedDevice.name ?? 'Unknown Device')
+                  : 'No printer selected',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: selectedDevice != null ? Colors.green : null,
+              ),
+            ),
+            subtitle: Text(
+              selectedDevice != null
+                  ? selectedDevice.address
+                  : 'Tap to scan and select a printer',
+            ),
+            trailing: TextButton.icon(
+              onPressed: () =>
+                  setState(() => _showDeviceList = !_showDeviceList),
+              icon: Icon(_showDeviceList
+                  ? Icons.expand_less
+                  : Icons.bluetooth_searching),
+              label: Text(_showDeviceList ? 'Hide' : 'Scan'),
+            ),
+            shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+        if (_showDeviceList) _buildDeviceList(),
+      ],
+    );
+  }
+
+  Widget _buildDeviceList() {
+    final selectedDevice = context.watch<ScannerBloc>().state.selectedDevice;
+
+    return Container(
+      height: 220,
+      margin: const EdgeInsets.only(top: 4),
+      child: StreamBuilder(
+        stream: FlutterBluetoothPrinter.discovery,
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 8),
+                  Text('Scanning for devices...'),
+                ],
+              ),
+            );
+          }
+
+          List<BluetoothDevice> devices = [];
+          try {
+            final dynamic d = snapshot.data;
+            if (d?.devices != null) {
+              devices = List<BluetoothDevice>.from(d.devices as List);
+            }
+          } catch (_) {
+            devices = [];
+          }
+
+          if (devices.isEmpty) {
+            return const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.bluetooth_disabled, size: 40, color: Colors.grey),
+                  SizedBox(height: 8),
+                  Text('No devices found',
+                      style: TextStyle(color: Colors.grey)),
+                ],
+              ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            itemCount: devices.length,
+            itemBuilder: (context, index) {
+              final device = devices[index];
+              final isSelected =
+                  selectedDevice?.address == device.address;
+
+              return ListTile(
+                dense: true,
+                leading: Icon(
+                  Icons.print,
+                  color: isSelected ? Colors.green : Colors.grey,
+                ),
+                title: Text(device.name ?? 'Unknown Device'),
+                subtitle: Text(
+                  device.address,
+                  style: const TextStyle(fontSize: 11),
+                ),
+                trailing: isSelected
+                    ? const Icon(Icons.check_circle, color: Colors.green)
+                    : const Icon(Icons.radio_button_unchecked,
+                    color: Colors.grey),
+                onTap: () {
+                  context.read<ScannerBloc>().add(SelectDevice(device: device));
+                  setState(() => _showDeviceList = false);
+                },
+              );
+            },
+          );
+        },
       ),
     );
   }
@@ -189,12 +332,10 @@ class SettingsScreen extends StatelessWidget {
               final List<Business> updatedList =
               List.from(currentUser.business ?? [])
                 ..removeWhere((e) => e.uid == business.uid);
-
               context.read<UserBloc>().add(UpdateUser(
                 uid: currentUser.uid,
                 user: currentUser.copyWith(business: updatedList),
               ));
-
               Navigator.pop(ctx);
             },
             child: Text(l10n.delete),
@@ -204,7 +345,8 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Future<XFile?> _pickAndCropImage(ImageSource source, BuildContext context) async {
+  Future<XFile?> _pickAndCropImage(
+      ImageSource source, BuildContext context) async {
     final picked = await ImagePicker().pickImage(source: source);
     if (picked == null) return null;
 
@@ -232,6 +374,7 @@ class SettingsScreen extends StatelessWidget {
     if (cropped == null) return null;
     return XFile(cropped.path);
   }
+
   void _showAddEditBusinessDialog(
       BuildContext context, Business? business, AppLocalizations l10n) {
     final nameController = TextEditingController(text: business?.businessName);
@@ -330,7 +473,6 @@ class SettingsScreen extends StatelessWidget {
 
                   final businessUid = business?.uid ??
                       DateTime.now().millisecondsSinceEpoch.toString();
-
                   final logoUrl = await uploadLogo(businessUid);
 
                   final newBusiness = Business(
@@ -371,9 +513,8 @@ class SettingsScreen extends StatelessWidget {
                         : l10n.editBusiness),
                     leading: IconButton(
                       icon: const Icon(Icons.close),
-                      onPressed: isUploading
-                          ? null
-                          : () => Navigator.of(context).pop(),
+                      onPressed:
+                      isUploading ? null : () => Navigator.of(context).pop(),
                     ),
                     actions: [
                       Padding(
@@ -446,20 +587,20 @@ class SettingsScreen extends StatelessWidget {
                           children: [
                             OutlinedButton.icon(
                               style: OutlinedButton.styleFrom(
-                                side:
-                                BorderSide(color: AppTheme.primaryColor),
+                                side: const BorderSide(
+                                    color: AppTheme.primaryColor),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8)),
                               ),
                               onPressed:
                               isUploading ? null : showImageSourceSheet,
-                              icon: Icon(Icons.camera_alt_outlined,
+                              icon: const Icon(Icons.camera_alt_outlined,
                                   size: 18, color: AppTheme.primaryColor),
                               label: Text(
                                 pickedImage == null && existingLogoUrl == null
                                     ? l10n.select
                                     : l10n.change,
-                                style: TextStyle(
+                                style: const TextStyle(
                                     color: AppTheme.primaryColor,
                                     fontSize: 12),
                               ),
@@ -469,11 +610,9 @@ class SettingsScreen extends StatelessWidget {
                               const SizedBox(width: 8),
                               OutlinedButton.icon(
                                 style: OutlinedButton.styleFrom(
-                                  side:
-                                  const BorderSide(color: Colors.red),
+                                  side: const BorderSide(color: Colors.red),
                                   shape: RoundedRectangleBorder(
-                                      borderRadius:
-                                      BorderRadius.circular(8)),
+                                      borderRadius: BorderRadius.circular(8)),
                                 ),
                                 onPressed: isUploading
                                     ? null
@@ -543,8 +682,7 @@ class SettingsScreen extends StatelessWidget {
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white),
+                                  strokeWidth: 2, color: Colors.white),
                             )
                                 : Text(l10n.confirm),
                           ),

@@ -116,10 +116,10 @@ class HomeScreen extends StatelessWidget {
                     delay: 400,
                   ),
                   _ActionCard(
-                    icon: Icons.notifications_outlined,
-                    title: l10n.notifications,
+                    icon: Icons.chat,
+                    title: "AI Assistant",
                     color: AppTheme.accent,
-                    onTap: () {},
+                    onTap: () => context.push(RouteNames.aiAssistant),
                     delay: 500,
                   ),
                   _ActionCard(

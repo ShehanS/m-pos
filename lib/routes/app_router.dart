@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_bloc_app/bloc/user/user_bloc.dart';
 import 'package:flutter_bloc_app/bloc/user/user_event.dart';
 import 'package:flutter_bloc_app/bloc/user/user_state.dart';
+import 'package:flutter_bloc_app/screens/ai_assistant.dart';
 import 'package:flutter_bloc_app/screens/profile/update_profile.dart';
 import 'package:flutter_bloc_app/screens/scan/scan_dispatch_screen.dart';
 import 'package:flutter_bloc_app/screens/stock/stock_in_screen.dart';
@@ -17,6 +18,7 @@ import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/auth/forgot_password_screen.dart';
 import '../screens/home/home_screen.dart';
+import '../screens/printer/bluetooth_printer_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/scan/scan_screen.dart';
 import '../screens/settings/settings_screen.dart';
@@ -210,7 +212,7 @@ class AppRouter {
               ),
             ),
             GoRoute(
-              path: "scan-dispatch",
+              path: 'scan-dispatch',
               name: 'scanDispatch',
               pageBuilder: (context, state) => CustomTransitionPage(
                 key: state.pageKey,
@@ -230,6 +232,15 @@ class AppRouter {
               pageBuilder: (context, state) => CustomTransitionPage(
                 key: state.pageKey,
                 child: const StockInScreen(),
+                transitionsBuilder: _slideTransition,
+              ),
+            ),
+            GoRoute(
+              path: 'ai-assistant',
+              name: 'aiAssistant',
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const BluetoothPrinterScreen(),
                 transitionsBuilder: _slideTransition,
               ),
             ),

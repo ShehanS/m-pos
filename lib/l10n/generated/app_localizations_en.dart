@@ -48,7 +48,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get forgotPasswordTitle => 'Reset Password';
 
   @override
-  String get forgotPasswordSubtitle => 'Enter your email to receive a reset link';
+  String get forgotPasswordSubtitle =>
+      'Enter your email to receive a reset link';
 
   @override
   String get sendResetLink => 'Send Reset Link';
@@ -162,7 +163,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get validationPasswordRequired => 'Password is required';
 
   @override
-  String get validationPasswordLength => 'Password must be at least 6 characters';
+  String get validationPasswordLength =>
+      'Password must be at least 6 characters';
 
   @override
   String get validationPasswordMatch => 'Passwords do not match';
@@ -171,7 +173,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get validationUsernameRequired => 'Username is required';
 
   @override
-  String get validationUsernameLength => 'Username must be at least 3 characters';
+  String get validationUsernameLength =>
+      'Username must be at least 3 characters';
 
   @override
   String get onboardingTitle1 => 'Stay Connected';
