@@ -4,6 +4,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_bloc_app/bloc/printer/printer_bloc.dart';
 import 'package:flutter_bloc_app/bloc/scanner/scanner_bloc.dart';
 import 'package:flutter_bloc_app/bloc/scanner/scanner_event.dart';
 import 'package:flutter_bloc_app/bloc/user/user_bloc.dart';
@@ -18,6 +19,7 @@ import '../../bloc/blocs.dart';
 import '../../bloc/locale/app_locales.dart';
 import '../../bloc/locale/locale_event.dart';
 import '../../bloc/locale/locale_state.dart';
+import '../../bloc/printer/printer_event.dart';
 import '../../dtos/business.dart';
 import '../../dtos/business_type.dart';
 import '../../entities/user_entity.dart';
@@ -63,7 +65,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               );
             },
-          ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.05, end: 0, delay: 300.ms),
+          )
+              .animate()
+              .fadeIn(delay: 300.ms)
+              .slideX(begin: -0.05, end: 0, delay: 300.ms),
           const SizedBox(height: 24),
           _SectionHeader(title: l10n.language).animate().fadeIn(delay: 400.ms),
           const SizedBox(height: 12),
@@ -83,7 +88,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 }).toList(),
               );
             },
-          ).animate().fadeIn(delay: 500.ms).slideX(begin: -0.05, end: 0, delay: 500.ms),
+          )
+              .animate()
+              .fadeIn(delay: 500.ms)
+              .slideX(begin: -0.05, end: 0, delay: 500.ms),
           const SizedBox(height: 24),
           _SectionHeader(title: l10n.businessTemplate)
               .animate()
@@ -108,25 +116,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
             iconColor: Colors.red,
             titleColor: Colors.red,
             onTap: () => _showSignOutDialog(context, l10n),
-          ).animate().fadeIn(delay: 700.ms).slideX(begin: -0.05, end: 0, delay: 700.ms),
-
+          )
+              .animate()
+              .fadeIn(delay: 700.ms)
+              .slideX(begin: -0.05, end: 0, delay: 700.ms),
         ],
       ),
     );
   }
 
   Widget _buildDeviceSection() {
-    final selectedDevice = context.watch<ScannerBloc>().state.selectedDevice;
+    final selectedDevice = context.watch<PrinterBloc>().state.selectedDevice;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: ListTile(
             leading: Icon(
               selectedDevice != null ? Icons.print : Icons.print_outlined,
-              color: selectedDevice != null ? Colors.green : AppTheme.primaryColor,
+              color:
+                  selectedDevice != null ? Colors.green : AppTheme.primaryColor,
             ),
             title: Text(
               selectedDevice != null
@@ -151,7 +163,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               label: Text(_showDeviceList ? 'Hide' : 'Scan'),
             ),
             shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
         if (_showDeviceList) _buildDeviceList(),
@@ -160,7 +172,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildDeviceList() {
-    final selectedDevice = context.watch<ScannerBloc>().state.selectedDevice;
+    final selectedDevice = context.watch<PrinterBloc>().state.selectedDevice;
 
     return Container(
       height: 220,
@@ -210,8 +222,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             itemCount: devices.length,
             itemBuilder: (context, index) {
               final device = devices[index];
-              final isSelected =
-                  selectedDevice?.address == device.address;
+              final isSelected = selectedDevice?.address == device.address;
 
               return ListTile(
                 dense: true,
@@ -227,9 +238,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 trailing: isSelected
                     ? const Icon(Icons.check_circle, color: Colors.green)
                     : const Icon(Icons.radio_button_unchecked,
-                    color: Colors.grey),
+                        color: Colors.grey),
                 onTap: () {
-                  context.read<ScannerBloc>().add(SelectDevice(device: device));
+                  context.read<PrinterBloc>().add(SelectDevice(device: device));
                   setState(() => _showDeviceList = false);
                 },
               );
@@ -281,26 +292,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return Column(
           children: [
             ...businesses.map((b) => _SettingsTile(
-              icon: Icons.business_rounded,
-              title: b.businessName,
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined, size: 20),
-                    onPressed: () =>
-                        _showAddEditBusinessDialog(context, b, l10n),
+                  icon: Icons.business_rounded,
+                  title: b.businessName,
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit_outlined, size: 20),
+                        onPressed: () =>
+                            _showAddEditBusinessDialog(context, b, l10n),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline,
+                            size: 20, color: Colors.red),
+                        onPressed: () => _showDeleteBusinessDialog(
+                            context, b, state.user!, l10n),
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline,
-                        size: 20, color: Colors.red),
-                    onPressed: () => _showDeleteBusinessDialog(
-                        context, b, state.user!, l10n),
-                  ),
-                ],
-              ),
-              onTap: () => _showAddEditBusinessDialog(context, b, l10n),
-            )),
+                  onTap: () => _showAddEditBusinessDialog(context, b, l10n),
+                )),
             TextButton.icon(
               onPressed: () => _showAddEditBusinessDialog(context, null, l10n),
               icon: const Icon(Icons.add),
@@ -329,12 +340,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
               final List<Business> updatedList =
-              List.from(currentUser.business ?? [])
-                ..removeWhere((e) => e.uid == business.uid);
+                  List.from(currentUser.business ?? [])
+                    ..removeWhere((e) => e.uid == business.uid);
               context.read<UserBloc>().add(UpdateUser(
-                uid: currentUser.uid,
-                user: currentUser.copyWith(business: updatedList),
-              ));
+                    uid: currentUser.uid,
+                    user: currentUser.copyWith(business: updatedList),
+                  ));
               Navigator.pop(ctx);
             },
             child: Text(l10n.delete),
@@ -405,7 +416,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     business != null &&
                     businessTypes.isNotEmpty) {
                   selectedBusinessType = businessTypes.firstWhere(
-                        (e) => e.uid == business.businessType.uid,
+                    (e) => e.uid == business.businessType.uid,
                     orElse: () => businessTypes.first,
                   );
                 }
@@ -428,7 +439,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     context: context,
                     shape: const RoundedRectangleBorder(
                       borderRadius:
-                      BorderRadius.vertical(top: Radius.circular(16)),
+                          BorderRadius.vertical(top: Radius.circular(16)),
                     ),
                     builder: (_) => SafeArea(
                       child: Column(
@@ -486,20 +497,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   final currentUser = context.read<UserBloc>().state.user!;
                   final List<Business> updatedList =
-                  List.from(currentUser.business ?? []);
+                      List.from(currentUser.business ?? []);
 
                   if (business == null) {
                     updatedList.add(newBusiness);
                   } else {
                     final index =
-                    updatedList.indexWhere((e) => e.uid == business.uid);
+                        updatedList.indexWhere((e) => e.uid == business.uid);
                     if (index != -1) updatedList[index] = newBusiness;
                   }
 
                   context.read<UserBloc>().add(UpdateUser(
-                    uid: currentUser.uid,
-                    user: currentUser.copyWith(business: updatedList),
-                  ));
+                        uid: currentUser.uid,
+                        user: currentUser.copyWith(business: updatedList),
+                      ));
 
                   setState(() => isUploading = false);
                   Navigator.of(context).pop();
@@ -512,30 +523,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         : l10n.editBusiness),
                     leading: IconButton(
                       icon: const Icon(Icons.close),
-                      onPressed:
-                      isUploading ? null : () => Navigator.of(context).pop(),
+                      onPressed: isUploading
+                          ? null
+                          : () => Navigator.of(context).pop(),
                     ),
                     actions: [
                       Padding(
                         padding: const EdgeInsets.only(right: 12),
                         child: isUploading
                             ? const Center(
-                          child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white),
-                          ),
-                        )
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2, color: Colors.white),
+                                ),
+                              )
                             : TextButton(
-                          onPressed: onConfirm,
-                          child: Text(
-                            l10n.confirm,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold),
-                          ),
-                        ),
+                                onPressed: onConfirm,
+                                child: Text(
+                                  l10n.confirm,
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
                       ),
                     ],
                   ),
@@ -553,29 +565,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                    color: AppTheme.primaryColor
-                                        .withOpacity(0.3)),
+                                    color:
+                                        AppTheme.primaryColor.withOpacity(0.3)),
                               ),
                               child: pickedImage != null
                                   ? ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
-                                child: Image.file(
-                                  File(pickedImage!.path),
-                                  fit: BoxFit.cover,
-                                ),
-                              )
+                                      borderRadius: BorderRadius.circular(16),
+                                      child: Image.file(
+                                        File(pickedImage!.path),
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
                                   : existingLogoUrl != null
-                                  ? ClipRRect(
-                                borderRadius:
-                                BorderRadius.circular(16),
-                                child: Image.network(
-                                  existingLogoUrl!,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) =>
-                                      _logoPlaceholder(),
-                                ),
-                              )
-                                  : _logoPlaceholder(),
+                                      ? ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(16),
+                                          child: Image.network(
+                                            existingLogoUrl!,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) =>
+                                                _logoPlaceholder(),
+                                          ),
+                                        )
+                                      : _logoPlaceholder(),
                             ),
                           ),
                         ),
@@ -591,7 +603,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     borderRadius: BorderRadius.circular(8)),
                               ),
                               onPressed:
-                              isUploading ? null : showImageSourceSheet,
+                                  isUploading ? null : showImageSourceSheet,
                               icon: const Icon(Icons.camera_alt_outlined,
                                   size: 18, color: AppTheme.primaryColor),
                               label: Text(
@@ -599,8 +611,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     ? l10n.select
                                     : l10n.change,
                                 style: const TextStyle(
-                                    color: AppTheme.primaryColor,
-                                    fontSize: 12),
+                                    color: AppTheme.primaryColor, fontSize: 12),
                               ),
                             ),
                             if (pickedImage != null ||
@@ -615,9 +626,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 onPressed: isUploading
                                     ? null
                                     : () => setState(() {
-                                  pickedImage = null;
-                                  existingLogoUrl = null;
-                                }),
+                                          pickedImage = null;
+                                          existingLogoUrl = null;
+                                        }),
                                 icon: const Icon(Icons.delete_outline,
                                     size: 18, color: Colors.red),
                                 label: Text(l10n.remove,
@@ -648,7 +659,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           label: l10n.businessName,
                           prefixIcon: Icons.business,
                           validator: (v) =>
-                          v == null || v.isEmpty ? "Required" : null,
+                              v == null || v.isEmpty ? "Required" : null,
                         ),
                         const SizedBox(height: 16),
                         CustomTextField(
@@ -677,11 +688,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             onPressed: isUploading ? null : onConfirm,
                             child: isUploading
                                 ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white),
-                            )
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2, color: Colors.white),
+                                  )
                                 : Text(l10n.confirm),
                           ),
                         ),
@@ -749,10 +760,10 @@ class _SectionHeader extends StatelessWidget {
     return Text(
       title,
       style: Theme.of(context).textTheme.labelLarge?.copyWith(
-        color: AppTheme.primaryColor,
-        letterSpacing: 1.0,
-        fontSize: 12,
-      ),
+            color: AppTheme.primaryColor,
+            letterSpacing: 1.0,
+            fontSize: 12,
+          ),
     );
   }
 }
@@ -814,9 +825,8 @@ class _LanguageTile extends StatelessWidget {
         color: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : null,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isSelected
-              ? AppTheme.primaryColor
-              : Colors.grey.withOpacity(0.2),
+          color:
+              isSelected ? AppTheme.primaryColor : Colors.grey.withOpacity(0.2),
           width: isSelected ? 2 : 1,
         ),
       ),
@@ -836,13 +846,13 @@ class _LanguageTile extends StatelessWidget {
           locale.languageCode == 'en'
               ? 'English'
               : locale.languageCode == 'si'
-              ? 'Sinhala'
-              : 'Tamil',
+                  ? 'Sinhala'
+                  : 'Tamil',
           style: const TextStyle(fontSize: 12),
         ),
         trailing: isSelected
             ? const Icon(Icons.check_circle_rounded,
-            color: AppTheme.primaryColor)
+                color: AppTheme.primaryColor)
             : null,
         onTap: onTap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

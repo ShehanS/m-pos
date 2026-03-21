@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_bloc_app/bloc/blocs.dart';
 import 'package:flutter_bloc_app/widgets/print_template.dart';
 
-import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/inventory/inventory_bloc.dart';
 import '../../bloc/inventory/inventory_event.dart';
 import '../../bloc/inventory/inventory_state.dart';
@@ -93,10 +92,8 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
           lots: lots,
           quantity: 1,
           sellingPrice: defaultLot?.sellingPrice ?? 0,
-          // ← was unitPrice
           discount: defaultLot?.discount ?? 0,
-          // ← was 0
-          discountType: DiscountType.flat,
+          discountType: DiscountType.percentage,
         ));
       }
     });
@@ -123,6 +120,10 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<UserBloc>().state.user;
+    _selectedBusiness = user?.business?.firstWhere(
+        (b) => b.businessName == user.activeBusiness,
+        orElse: () => user.business!.first);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dispatch Bill'),
@@ -163,7 +164,9 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
         child: SizedBox(
           width: double.infinity,
           child: FloatingActionButton.extended(
-            onPressed: _isScanning || _selectedBusiness == null ? null : () => _startScan(context),
+            onPressed: _isScanning || _selectedBusiness == null
+                ? null
+                : () => _startScan(context),
             icon: _isScanning
                 ? const SizedBox(
                     width: 18,
@@ -641,12 +644,10 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
   ) {
     final defaultLot = lots.isNotEmpty ? lots.first : null;
 
-    // ← was lots.first.unitPrice, now correctly uses sellingPrice
     final sellingPriceController = TextEditingController(
       text: defaultLot?.sellingPrice.toStringAsFixed(2) ?? '',
     );
 
-    // ← was '0', now pre-filled from lot discount
     final discountController = TextEditingController(
       text: defaultLot?.discount != null && defaultLot!.discount! > 0
           ? defaultLot.discount!.toStringAsFixed(2)
@@ -660,7 +661,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
 
     double discount = defaultLot?.discount ?? 0;
     int qty = 1;
-    DiscountType discountType = DiscountType.flat;
+    DiscountType discountType = DiscountType.percentage;
     LotEntity? selectedLot = defaultLot;
 
     return showModalBottomSheet<void>(

@@ -2,11 +2,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_bloc_app/bloc/printer/printer_bloc.dart';
 import 'package:flutter_bloc_app/bloc/scanner/scanner_bloc.dart';
 import 'package:flutter_bloc_app/bloc/scanner/scanner_state.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../bloc/blocs.dart';
+import '../../bloc/printer/printer_state.dart';
 import '../../l10n/app_localizations.dart';
 import '../../routes/route_names.dart';
 import '../../theme/app_theme.dart';
@@ -171,7 +173,7 @@ class _WelcomeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final deviceConnectionStatus =
-        context.watch<ScannerBloc>().state.connectionStatus;
+        context.watch<PrinterBloc>().state.connectionStatus;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(

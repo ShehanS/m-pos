@@ -1,13 +1,16 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_bloc_app/bloc/blocs.dart';
+import 'package:flutter_bloc_app/bloc/printer/printer_bloc.dart';
 import 'package:flutter_bloc_app/bloc/user/user_bloc.dart';
 import 'package:flutter_bloc_app/dtos/bill_item.dart';
 import 'package:flutter_bloc_app/entities/user_entity.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../bloc/scanner/scanner_bloc.dart';
@@ -31,6 +34,8 @@ class PrintTemplate extends StatefulWidget {
 class _PrintTemplateState extends State<PrintTemplate> {
   final GlobalKey _receiptKey = GlobalKey();
   bool _isPrinting = false;
+  bool _logoLoaded = false;
+  String? _logoUrl;
 
   double get _subtotal =>
       widget.billItems.fold(0.0, (sum, i) => sum + i.subtotal);
@@ -44,15 +49,60 @@ class _PrintTemplateState extends State<PrintTemplate> {
   @override
   void initState() {
     super.initState();
-    // wait for widget tree to fully render before capturing
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _print();
+      _initAndPrint();
     });
+  }
+
+  Future<void> _initAndPrint() async {
+    final user = context.read<UserBloc>().state.user;
+    final selectedBusiness = user?.business?.firstWhere(
+          (b) => b.businessName == user.activeBusiness,
+      orElse: () => user.business!.first,
+    );
+
+    _logoUrl = selectedBusiness?.logoUrl;
+
+    if (_logoUrl != null && _logoUrl!.isNotEmpty) {
+      // preload image and wait for it to complete before printing
+      await _preloadImage(_logoUrl!);
+    } else {
+      setState(() => _logoLoaded = true);
+    }
+
+    // extra frame after setState to ensure UI redraws with loaded image
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (mounted) _print();
+  }
+
+  Future<void> _preloadImage(String url) async {
+    try {
+      final imageProvider = NetworkImage(url);
+      final completer = Completer<void>();
+      final stream = imageProvider.resolve(ImageConfiguration.empty);
+      late ImageStreamListener listener;
+      listener = ImageStreamListener(
+            (info, _) {
+          if (!completer.isCompleted) completer.complete();
+          stream.removeListener(listener);
+          if (mounted) setState(() => _logoLoaded = true);
+        },
+        onError: (error, stack) {
+          if (!completer.isCompleted) completer.complete();
+          stream.removeListener(listener);
+          if (mounted) setState(() => _logoLoaded = true);
+        },
+      );
+      stream.addListener(listener);
+      await completer.future;
+    } catch (_) {
+      if (mounted) setState(() => _logoLoaded = true);
+    }
   }
 
   Future<void> _print() async {
     final selectedDevice =
-        context.read<ScannerBloc>().state.selectedDevice;
+        context.read<PrinterBloc>().state.selectedDevice;
 
     if (selectedDevice == null) {
       if (mounted) {
@@ -69,7 +119,6 @@ class _PrintTemplateState extends State<PrintTemplate> {
     setState(() => _isPrinting = true);
 
     try {
-      // extra frame to ensure RepaintBoundary is painted
       await Future.delayed(const Duration(milliseconds: 300));
 
       final boundary = _receiptKey.currentContext?.findRenderObject()
@@ -107,6 +156,7 @@ class _PrintTemplateState extends State<PrintTemplate> {
             backgroundColor: Colors.green,
           ),
         );
+        context.pop(context);
       }
     } catch (e) {
       if (mounted) {
@@ -162,35 +212,29 @@ class _PrintTemplateState extends State<PrintTemplate> {
           orElse: () => user!.business!.first,
         );
 
-        // RepaintBoundary wraps only the receipt widget
         return RepaintBoundary(
           key: _receiptKey,
           child: Container(
             width: 576,
             color: Colors.white,
-            padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ── Logo ────────────────────────────────────────────
-                if (selectedBusiness?.logoUrl != null &&
-                    selectedBusiness!.logoUrl!.isNotEmpty)
+                if (_logoUrl != null && _logoUrl!.isNotEmpty && _logoLoaded)
                   Center(
                     child: Image.network(
-                      selectedBusiness.logoUrl!,
-                      width: 120,
-                      height: 120,
+                      _logoUrl!,
+                      width: 80,
+                      height: 80,
                       errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                     ),
                   ),
-
-                // ── Business info ────────────────────────────────────
                 Text(
                   selectedBusiness?.businessName ?? 'MY STORE',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 24,
+                    fontSize: 25,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
@@ -199,22 +243,15 @@ class _PrintTemplateState extends State<PrintTemplate> {
                   Text(
                     selectedBusiness!.address!,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        fontSize: 15, color: Colors.black),
+                    style: const TextStyle(fontSize: 18, color: Colors.black),
                   ),
                 if (selectedBusiness?.contact != null)
                   Text(
                     selectedBusiness!.contact!,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        fontSize: 15, color: Colors.black),
+                    style: const TextStyle(fontSize: 18, color: Colors.black),
                   ),
-
-                const SizedBox(height: 8),
                 _dashedDivider(),
-                const SizedBox(height: 4),
-
-                // ── Receipt meta ─────────────────────────────────────
                 _receiptRow(
                   'Date',
                   DateFormat('dd/MM/yyyy hh:mm a').format(DateTime.now()),
@@ -222,65 +259,55 @@ class _PrintTemplateState extends State<PrintTemplate> {
                 if (widget.dispatchedTo != null &&
                     widget.dispatchedTo!.isNotEmpty)
                   _receiptRow('Customer', widget.dispatchedTo!),
-
-                const SizedBox(height: 4),
                 _dashedDivider(),
-                const SizedBox(height: 4),
-
-                // ── Column headers ───────────────────────────────────
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 4,
-                        child: Text(
-                          'Item',
-                          style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black),
-                        ),
+                const Row(
+                  children: [
+                    Expanded(
+                      flex: 4,
+                      child: Text(
+                        'Item',
+                        style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black),
                       ),
-                      SizedBox(
-                        width: 50,
-                        child: Text(
-                          'Qty',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black),
-                        ),
+                    ),
+                    SizedBox(
+                      width: 40,
+                      child: Text(
+                        'Qty',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black),
                       ),
-                      SizedBox(
-                        width: 80,
-                        child: Text(
-                          'Price',
-                          textAlign: TextAlign.right,
-                          style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black),
-                        ),
+                    ),
+                    SizedBox(
+                      width: 85,
+                      child: Text(
+                        'Price',
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black),
                       ),
-                      SizedBox(
-                        width: 80,
-                        child: Text(
-                          'Total',
-                          textAlign: TextAlign.right,
-                          style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black),
-                        ),
+                    ),
+                    SizedBox(
+                      width: 85,
+                      child: Text(
+                        'Total',
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
                 _dashedDivider(),
-
-                // ── Bill items ───────────────────────────────────────
                 ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -288,7 +315,7 @@ class _PrintTemplateState extends State<PrintTemplate> {
                   itemBuilder: (context, index) {
                     final b = widget.billItems[index];
                     return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 5),
+                      padding: const EdgeInsets.symmetric(vertical: 3),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -302,34 +329,34 @@ class _PrintTemplateState extends State<PrintTemplate> {
                                       ? '${b.item.name} (${b.item.variant})'
                                       : b.item.name,
                                   style: const TextStyle(
-                                      fontSize: 15, color: Colors.black),
+                                      fontSize: 20, color: Colors.black),
                                 ),
                               ),
                               SizedBox(
-                                width: 50,
+                                width: 40,
                                 child: Text(
                                   '${b.quantity}',
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
-                                      fontSize: 15, color: Colors.black),
+                                      fontSize: 20, color: Colors.black),
                                 ),
                               ),
                               SizedBox(
-                                width: 80,
+                                width: 85,
                                 child: Text(
                                   b.sellingPrice.toStringAsFixed(2),
                                   textAlign: TextAlign.right,
                                   style: const TextStyle(
-                                      fontSize: 15, color: Colors.black),
+                                      fontSize: 20, color: Colors.black),
                                 ),
                               ),
                               SizedBox(
-                                width: 80,
+                                width: 85,
                                 child: Text(
                                   b.subtotal.toStringAsFixed(2),
                                   textAlign: TextAlign.right,
                                   style: const TextStyle(
-                                      fontSize: 15,
+                                      fontSize: 20,
                                       fontWeight: FontWeight.w500,
                                       color: Colors.black),
                                 ),
@@ -337,25 +364,24 @@ class _PrintTemplateState extends State<PrintTemplate> {
                             ],
                           ),
                           if (b.discount > 0) ...[
-                            const SizedBox(height: 2),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 Text(
                                   b.discountType == DiscountType.percentage
                                       ? 'Disc ${b.discount.toStringAsFixed(0)}%'
-                                      : 'Disc (flat)',
+                                      : 'Disc',
                                   style: const TextStyle(
-                                      fontSize: 13, color: Colors.grey),
+                                      fontSize: 18, color: Colors.black),
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 6),
                                 SizedBox(
-                                  width: 80,
+                                  width: 85,
                                   child: Text(
                                     '- ${b.discountAmount.toStringAsFixed(2)}',
                                     textAlign: TextAlign.right,
                                     style: const TextStyle(
-                                        fontSize: 13, color: Colors.grey),
+                                        fontSize: 18, color: Colors.grey),
                                   ),
                                 ),
                               ],
@@ -366,18 +392,18 @@ class _PrintTemplateState extends State<PrintTemplate> {
                                 const Text(
                                   'Item Total',
                                   style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w600,
                                       color: Colors.black),
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 6),
                                 SizedBox(
-                                  width: 80,
+                                  width: 85,
                                   child: Text(
                                     b.total.toStringAsFixed(2),
                                     textAlign: TextAlign.right,
                                     style: const TextStyle(
-                                        fontSize: 13,
+                                        fontSize: 20,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.black),
                                   ),
@@ -390,93 +416,63 @@ class _PrintTemplateState extends State<PrintTemplate> {
                     );
                   },
                 ),
-
-                const SizedBox(height: 4),
                 _dashedDivider(),
-                const SizedBox(height: 4),
-
-                // ── Totals ───────────────────────────────────────────
                 _receiptRow('Subtotal', _subtotal.toStringAsFixed(2)),
-                if (_totalDiscount > 0) ...[
-                  const SizedBox(height: 2),
+                if (_totalDiscount > 0)
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    padding: const EdgeInsets.symmetric(vertical: 1),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Total Discount',
-                          style: TextStyle(
-                              fontSize: 15, color: Colors.grey),
-                        ),
+                        const Text('Total Discount',
+                            style: TextStyle(fontSize: 20, color: Colors.black)),
                         Text(
                           '- ${_totalDiscount.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                              fontSize: 15, color: Colors.grey),
+                          style:
+                          const TextStyle(fontSize: 20, color: Colors.black),
                         ),
                       ],
                     ),
                   ),
-                ],
-
-                const SizedBox(height: 4),
                 _dashedDivider(),
-                const SizedBox(height: 4),
-
-                // ── Grand total ──────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'TOTAL / එකතුව',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                            color: Colors.black),
-                      ),
-                      Text(
-                        'LKR ${_grandTotal.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                            color: Colors.black),
-                      ),
-                    ],
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'TOTAL / එකතුව',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 25,
+                          color: Colors.black),
+                    ),
+                    Text(
+                      'LKR ${_grandTotal.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 25,
+                          color: Colors.black),
+                    ),
+                  ],
                 ),
-
-                // ── Notes ────────────────────────────────────────────
                 if (widget.notes != null && widget.notes!.isNotEmpty) ...[
-                  const SizedBox(height: 8),
                   _dashedDivider(),
-                  const SizedBox(height: 4),
                   Text(
                     'Note: ${widget.notes}',
-                    style: const TextStyle(
-                        fontSize: 14, color: Colors.grey),
+                    style: const TextStyle(fontSize: 18, color: Colors.black),
                   ),
                 ],
-
-                const SizedBox(height: 20),
                 _dashedDivider(),
-                const SizedBox(height: 8),
-
-                // ── Footer ───────────────────────────────────────────
                 const Text(
                   'Thank you! / ස්තූතියි! / நன்றி!',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, color: Colors.black),
+                  style: TextStyle(fontSize: 20, color: Colors.black),
                 ),
-                const SizedBox(height: 4),
                 const Text(
                   'Please come again',
                   textAlign: TextAlign.center,
-                  style:
-                  TextStyle(fontSize: 14, color: Colors.grey),
+                  style: TextStyle(fontSize: 18, color: Colors.black),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 16),
               ],
             ),
           ),
@@ -487,7 +483,7 @@ class _PrintTemplateState extends State<PrintTemplate> {
 
   Widget _dashedDivider() {
     return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 4),
+      padding: EdgeInsets.symmetric(vertical: 3),
       child: Text(
         '- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -',
         textAlign: TextAlign.center,
@@ -501,12 +497,10 @@ class _PrintTemplateState extends State<PrintTemplate> {
   Widget _receiptRow(String label, String value, {bool bold = false}) {
     final style = bold
         ? const TextStyle(
-        fontWeight: FontWeight.bold,
-        fontSize: 18,
-        color: Colors.black)
-        : const TextStyle(fontSize: 15, color: Colors.black);
+        fontWeight: FontWeight.bold, fontSize: 22, color: Colors.black)
+        : const TextStyle(fontSize: 20, color: Colors.black);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 1),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

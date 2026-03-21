@@ -3,10 +3,14 @@ import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_bloc_app/bloc/printer/printer_bloc.dart';
+import 'package:flutter_bloc_app/bloc/printer/printer_state.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer.dart';
 import 'package:flutter_bloc_app/bloc/scanner/scanner_bloc.dart';
 import 'package:flutter_bloc_app/bloc/scanner/scanner_event.dart';
 import 'package:flutter_bloc_app/bloc/scanner/scanner_state.dart';
+
+import '../../bloc/printer/printer_event.dart';
 
 class BluetoothPrinterScreen extends StatefulWidget {
   const BluetoothPrinterScreen({super.key});
@@ -21,7 +25,7 @@ class _BluetoothPrinterScreenState extends State<BluetoothPrinterScreen> {
   bool _showDeviceList = false;
 
   Future<void> _print() async {
-    final selectedDevice = context.read<ScannerBloc>().state.selectedDevice;
+    final selectedDevice = context.read<PrinterBloc>().state.selectedDevice;
 
     if (selectedDevice == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -34,15 +38,14 @@ class _BluetoothPrinterScreenState extends State<BluetoothPrinterScreen> {
 
     try {
       final boundary = _receiptKey.currentContext?.findRenderObject()
-      as RenderRepaintBoundary?;
+          as RenderRepaintBoundary?;
 
       if (boundary == null) throw Exception('Could not capture receipt image');
 
       // pixelRatio: 1.0 keeps image at exact widget pixel size
       // so imageWidth matches the 576px container exactly
       final ui.Image image = await boundary.toImage(pixelRatio: 1.0);
-      final byteData =
-      await image.toByteData(format: ui.ImageByteFormat.png);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
 
       if (byteData == null) throw Exception('Failed to convert image');
 
@@ -80,7 +83,7 @@ class _BluetoothPrinterScreenState extends State<BluetoothPrinterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ScannerBloc, ScannerState>(
+    return BlocBuilder<PrinterBloc, PrinterState>(
       builder: (context, scannerState) {
         final selectedDevice = scannerState.selectedDevice;
 
@@ -210,7 +213,7 @@ class _BluetoothPrinterScreenState extends State<BluetoothPrinterScreen> {
                     : const Icon(Icons.radio_button_unchecked,
                         color: Colors.grey),
                 onTap: () {
-                  context.read<ScannerBloc>().add(SelectDevice(device: device));
+                  context.read<PrinterBloc>().add(SelectDevice(device: device));
                   setState(() => _showDeviceList = false);
                 },
               );
