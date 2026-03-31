@@ -10,6 +10,7 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
   InventoryBloc(this._inventoryRepository) : super(const InventoryState()) {
     on<Started>(_onStarted);
     on<AddItem>(_onAddItem);
+    on<EditStock>(_onEditStock);
     on<AddStock>(_onAddStock);
     on<Dispatch>(_onDispatch);
     on<DispatchByBarcode>(_onDispatchByBarcode);
@@ -103,6 +104,42 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
             status: InventoryStatus.loaded,
             items: items,
             lastOperation: 'Stock added successfully',
+          )),
+        );
+      },
+    );
+  }
+
+  Future<void> _onEditStock(
+      EditStock event,
+      Emitter<InventoryState> emit,
+      ) async {
+    emit(state.copyWith(status: InventoryStatus.loading));
+    final result = await _inventoryRepository.editStock(
+      itemId: event.itemId,
+      lotId: event.lotId,
+      unitPrice: event.unitPrice,
+      sellingPrice: event.sellingPrice,
+      quantity: event.quantity,
+      discount: event.discount,
+      notes: event.notes,
+    );
+    await result.fold(
+          (error) async => emit(state.copyWith(
+        status: InventoryStatus.error,
+        errorMessage: error,
+      )),
+          (_) async {
+        final itemsResult = await _inventoryRepository.getAllItems();
+        itemsResult.fold(
+              (error) => emit(state.copyWith(
+            status: InventoryStatus.loaded,
+            lastOperation: 'Stock updated successfully',
+          )),
+              (items) => emit(state.copyWith(
+            status: InventoryStatus.loaded,
+            items: items,
+            lastOperation: 'Stock updated successfully',
           )),
         );
       },

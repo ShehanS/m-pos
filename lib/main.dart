@@ -14,6 +14,8 @@ import 'bloc/blocs.dart';
 import 'bloc/inventory/inventory_bloc.dart';
 import 'bloc/locale/locale_event.dart';
 import 'bloc/locale/locale_state.dart';
+import 'bloc/printer/printer_bloc.dart';
+import 'bloc/printer/printer_event.dart';
 import 'firebase_options.dart';
 import 'l10n/app_localizations.dart';
 import 'local_storage/local_storage_service.dart';
@@ -78,9 +80,10 @@ class MyApp extends StatelessWidget {
             notificationService: notificationService,
           ),
         ),
-        BlocProvider<ScannerBloc>(
+        BlocProvider<ScannerBloc>(lazy: false, create: (_) => ScannerBloc()),
+        BlocProvider<PrinterBloc>(
           lazy: false,
-          create: (_) => ScannerBloc()..add(const DeviceAutoConnect()),
+          create: (_) => PrinterBloc()..add(const DeviceAutoConnect()),
         ),
       ],
       child: BlocBuilder<LocaleBloc, LocaleState>(

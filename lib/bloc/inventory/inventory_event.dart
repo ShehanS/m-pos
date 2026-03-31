@@ -24,6 +24,17 @@ class InventoryEvent with _$InventoryEvent {
     String? notes,
   }) = AddStock;
 
+  const factory InventoryEvent.editStock({
+    required String itemId,
+    required String lotId,
+    required double unitPrice,
+    required double sellingPrice,
+    required int quantity,
+    double? discount,
+    String? notes,
+  }) = EditStock;
+
+
   const factory InventoryEvent.dispatch({
     required String itemId,
     required int quantity,

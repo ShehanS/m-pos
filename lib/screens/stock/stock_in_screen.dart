@@ -12,6 +12,7 @@ import '../../bloc/scanner/scanner_event.dart';
 import '../../bloc/scanner/scanner_state.dart';
 import '../../dtos/bill_item.dart';
 import '../../entities/item_entity.dart';
+import '../../entities/lot_entity.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/custom_dropdown.dart';
 import '../../widgets/custom_text_field.dart';
@@ -74,13 +75,6 @@ class _StockInScreenState extends State<StockInScreen> {
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          FloatingActionButton(
-            heroTag: 'scan_dispatch',
-            onPressed: () => _showScanDispatchDialog(context),
-            backgroundColor: Colors.orange,
-            tooltip: 'Dispatch by scan',
-            child: const Icon(Icons.qr_code_scanner),
-          ),
           const SizedBox(height: 12),
           FloatingActionButton.extended(
             heroTag: 'add_stock',
@@ -133,8 +127,8 @@ class _StockInScreenState extends State<StockInScreen> {
           child: state.status == InventoryStatus.loading && items.isEmpty
               ? const Center(child: CircularProgressIndicator())
               : items.isEmpty
-                  ? _buildEmptyState(context)
-                  : _buildItemList(context, state),
+              ? _buildEmptyState(context)
+              : _buildItemList(context, state),
         ),
       ),
     );
@@ -146,18 +140,18 @@ class _StockInScreenState extends State<StockInScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.inventory_2_outlined,
-                  size: 80, color: Colors.grey.withOpacity(0.5))
+              size: 80, color: Colors.grey.withOpacity(0.5))
               .animate()
               .scale(begin: const Offset(0.8, 0.8), curve: Curves.easeOutBack)
               .fadeIn(),
           const SizedBox(height: 16),
           Text('No items yet',
-                  style: Theme.of(context).textTheme.headlineMedium)
+              style: Theme.of(context).textTheme.headlineMedium)
               .animate()
               .fadeIn(delay: 200.ms),
           const SizedBox(height: 8),
           Text('Add an item to get started',
-                  style: Theme.of(context).textTheme.bodyMedium)
+              style: Theme.of(context).textTheme.bodyMedium)
               .animate()
               .fadeIn(delay: 300.ms),
           const SizedBox(height: 24),
@@ -201,8 +195,8 @@ class _StockInScreenState extends State<StockInScreen> {
                   Expanded(
                     child: Text(
                       'Unit: ${item.unit}'
-                      '${item.variant != null ? ' • ${item.variant}' : ''}'
-                      '${item.category != null ? ' • ${item.category}' : ''}',
+                          '${item.variant != null ? ' • ${item.variant}' : ''}'
+                          '${item.category != null ? ' • ${item.category}' : ''}',
                       style: const TextStyle(fontSize: 12),
                     ),
                   ),
@@ -240,6 +234,8 @@ class _StockInScreenState extends State<StockInScreen> {
                     onSelected: (value) {
                       if (value == 'edit') {
                         _showEditItemDialog(context, item);
+                      } else if (value == 'manage_stock') {
+                        _showManageStockDialog(context, item);
                       } else if (value == 'delete') {
                         _confirmDelete(context, item);
                       }
@@ -251,7 +247,17 @@ class _StockInScreenState extends State<StockInScreen> {
                           children: [
                             Icon(Icons.edit_outlined, size: 18),
                             SizedBox(width: 10),
-                            Text('Edit'),
+                            Text('Edit Item'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'manage_stock',
+                        child: Row(
+                          children: [
+                            Icon(Icons.inventory_2_outlined, size: 18),
+                            SizedBox(width: 10),
+                            Text('Manage Stock'),
                           ],
                         ),
                       ),
@@ -282,6 +288,288 @@ class _StockInScreenState extends State<StockInScreen> {
     );
   }
 
+  void _showManageStockDialog(BuildContext context, ItemEntity item) {
+    context.read<InventoryBloc>().add(LoadActiveLots(itemId: item.itemId));
+
+    _showFullScreen(
+      context: context,
+      child: BlocBuilder<InventoryBloc, InventoryState>(
+        builder: (context, state) {
+          return Scaffold(
+            appBar: AppBar(
+              title: Text('Stock Details: ${item.name}'),
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+            body: state.status == InventoryStatus.loading
+                ? const Center(child: CircularProgressIndicator())
+                : state.activeLots.isEmpty
+                ? const Center(child: Text("No stock found."))
+                : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: state.activeLots.length,
+              itemBuilder: (ctx, index) {
+                final lot = state.activeLots[index];
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: ListTile(
+                    title: Text('Batch: ${lot.poNumber ?? "N/A"}'),
+                    subtitle: Text(
+                      'Cost: ${lot.unitPrice.toStringAsFixed(2)} | Sell: ${lot.sellingPrice.toStringAsFixed(2)}\nDiscount: ${lot.discount?.toStringAsFixed(2) ?? "0.00"} | Stock: ${lot.quantityRemaining}',
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.edit_note_outlined,
+                          color: AppTheme.primaryColor),
+                      onPressed: () =>
+                          _showEditStockForm(context, item, lot),
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showEditStockForm(BuildContext context, ItemEntity item, LotEntity lot) {
+    final unitPriceController =
+    TextEditingController(text: lot.unitPrice.toString());
+    final sellingPriceController =
+    TextEditingController(text: lot.sellingPrice.toString());
+
+    DiscountType discountType = DiscountType.percentage;
+
+    double savedFlatDiscount = lot.discount ?? 0.0;
+    double displayDiscount = 0.0;
+    if (lot.sellingPrice > 0) {
+      displayDiscount = (savedFlatDiscount / lot.sellingPrice) * 100;
+    }
+
+    final discountController = TextEditingController(
+        text: displayDiscount == 0 ? '0' : displayDiscount.toStringAsFixed(2));
+
+    final qtyController =
+    TextEditingController(text: lot.quantityRemaining.toString());
+    final notesController = TextEditingController(text: lot.notes ?? '');
+    final formKey = GlobalKey<FormState>();
+
+    _showFullScreen(
+      context: context,
+      child: StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          final currentSellingPrice =
+              double.tryParse(sellingPriceController.text) ?? 0;
+          final inputDiscountValue =
+              double.tryParse(discountController.text) ?? 0;
+
+          final calculatedFlatDiscount = discountType == DiscountType.percentage
+              ? currentSellingPrice * (inputDiscountValue / 100)
+              : inputDiscountValue;
+
+          final effectivePrice = currentSellingPrice - calculatedFlatDiscount;
+
+          return _buildFormScaffold(
+            title: 'Edit Stock Batch',
+            dialogContext: ctx,
+            actions: [
+              TextButton(
+                onPressed: () {
+                  if (!formKey.currentState!.validate()) return;
+                  final finalSellingPrice =
+                  double.parse(sellingPriceController.text.trim());
+                  final finalDiscountInput =
+                      double.tryParse(discountController.text.trim()) ?? 0;
+
+                  final flatDiscountToSave =
+                  discountType == DiscountType.percentage
+                      ? finalSellingPrice * (finalDiscountInput / 100)
+                      : finalDiscountInput;
+
+                  context.read<InventoryBloc>().add(
+                    EditStock(
+                      itemId: item.itemId,
+                      lotId: lot.lotId,
+                      unitPrice:
+                      double.parse(unitPriceController.text.trim()),
+                      sellingPrice: finalSellingPrice,
+                      quantity: int.parse(qtyController.text.trim()),
+                      discount:
+                      flatDiscountToSave <= 0 ? 0.00 : flatDiscountToSave,
+                      notes: notesController.text.trim().isEmpty
+                          ? null
+                          : notesController.text.trim(),
+                    ),
+                  );
+                  Navigator.pop(ctx);
+                  Navigator.pop(context);
+                },
+                child: const Text('Update'),
+              ),
+            ],
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  children: [
+                    CustomTextField(
+                      controller: unitPriceController,
+                      label: 'Unit Price (Cost) *',
+                      prefixIcon: Icons.attach_money_outlined,
+                      keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                      validator: (v) =>
+                      v == null || v.isEmpty ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    CustomTextField(
+                      controller: sellingPriceController,
+                      label: 'Selling Price *',
+                      prefixIcon: Icons.sell_outlined,
+                      keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                      validator: (v) =>
+                      v == null || v.isEmpty ? 'Required' : null,
+                      onEditingComplete: () => setDialogState(() {}),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: CustomTextField(
+                            controller: discountController,
+                            label: discountType == DiscountType.percentage
+                                ? 'Discount %'
+                                : 'Discount flat',
+                            prefixIcon: Icons.discount_outlined,
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
+                            onEditingComplete: () => setDialogState(() {}),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Column(
+                          children: [
+                            const Text('Type',
+                                style: TextStyle(
+                                    fontSize: 11, color: Colors.grey)),
+                            const SizedBox(height: 4),
+                            Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: AppTheme.primaryColor
+                                        .withOpacity(0.3)),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _buildDiscountTypeBtn(
+                                    label: 'Flat',
+                                    selected: discountType == DiscountType.flat,
+                                    onTap: () => setDialogState(() =>
+                                    discountType = DiscountType.flat),
+                                  ),
+                                  _buildDiscountTypeBtn(
+                                    label: '%',
+                                    selected:
+                                    discountType == DiscountType.percentage,
+                                    onTap: () => setDialogState(() =>
+                                    discountType = DiscountType.percentage),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    if (currentSellingPrice > 0) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                              color: AppTheme.primaryColor.withOpacity(0.15)),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('Original Selling Price',
+                                    style: TextStyle(
+                                        fontSize: 13, color: Colors.grey)),
+                                Text(currentSellingPrice.toStringAsFixed(2),
+                                    style: const TextStyle(fontSize: 13)),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('Total Discount Amount',
+                                    style: TextStyle(
+                                        fontSize: 13, color: Colors.orange)),
+                                Text(
+                                    '- ${calculatedFlatDiscount.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                        fontSize: 13, color: Colors.orange)),
+                              ],
+                            ),
+                            const Divider(),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('Effective Selling Price',
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold)),
+                                Text(effectivePrice.toStringAsFixed(2),
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.primaryColor)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    CustomTextField(
+                      controller: qtyController,
+                      label: 'Remaining Quantity *',
+                      prefixIcon: Icons.inventory_2_outlined,
+                      keyboardType: TextInputType.number,
+                      validator: (v) =>
+                      v == null || v.isEmpty ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    CustomTextField(
+                      controller: notesController,
+                      label: 'Notes',
+                      prefixIcon: Icons.notes_outlined,
+                      maxLines: 3,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildFormScaffold({
     required String title,
     required Widget body,
@@ -297,9 +585,9 @@ class _StockInScreenState extends State<StockInScreen> {
         ),
         actions: actions
             .map((a) => Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: a,
-                ))
+          padding: const EdgeInsets.only(right: 8),
+          child: a,
+        ))
             .toList(),
       ),
       body: SafeArea(child: body),
@@ -326,26 +614,26 @@ class _StockInScreenState extends State<StockInScreen> {
               onPressed: () {
                 if (!formKey.currentState!.validate()) return;
                 context.read<InventoryBloc>().add(
-                      InventoryEvent.addItem(
-                        item: ItemEntity(
-                          itemId: '',
-                          name: nameController.text.trim(),
-                          unit: unitController.text.trim(),
-                          variant: variantController.text.trim().isEmpty
-                              ? null
-                              : variantController.text.trim(),
-                          category: categoryController.text.trim().isEmpty
-                              ? null
-                              : categoryController.text.trim(),
-                          description: descController.text.trim().isEmpty
-                              ? null
-                              : descController.text.trim(),
-                          barcode: barcodeController.text.trim().isEmpty
-                              ? null
-                              : barcodeController.text.trim(),
-                        ),
-                      ),
-                    );
+                  InventoryEvent.addItem(
+                    item: ItemEntity(
+                      itemId: '',
+                      name: nameController.text.trim(),
+                      unit: unitController.text.trim(),
+                      variant: variantController.text.trim().isEmpty
+                          ? null
+                          : variantController.text.trim(),
+                      category: categoryController.text.trim().isEmpty
+                          ? null
+                          : categoryController.text.trim(),
+                      description: descController.text.trim().isEmpty
+                          ? null
+                          : descController.text.trim(),
+                      barcode: barcodeController.text.trim().isEmpty
+                          ? null
+                          : barcodeController.text.trim(),
+                    ),
+                  ),
+                );
                 Navigator.pop(ctx);
               },
               child: const Text('Save'),
@@ -362,7 +650,7 @@ class _StockInScreenState extends State<StockInScreen> {
                     label: 'Item Name *',
                     prefixIcon: Icons.inventory_2_outlined,
                     validator: (v) =>
-                        v == null || v.trim().isEmpty ? 'Required' : null,
+                    v == null || v.trim().isEmpty ? 'Required' : null,
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
@@ -376,7 +664,7 @@ class _StockInScreenState extends State<StockInScreen> {
                     label: 'Unit * (e.g. kg, pcs, L)',
                     prefixIcon: Icons.straighten_outlined,
                     validator: (v) =>
-                        v == null || v.trim().isEmpty ? 'Required' : null,
+                    v == null || v.trim().isEmpty ? 'Required' : null,
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
@@ -451,25 +739,25 @@ class _StockInScreenState extends State<StockInScreen> {
               onPressed: () {
                 if (!formKey.currentState!.validate()) return;
                 context.read<InventoryBloc>().add(
-                      InventoryEvent.editItem(
-                        item: item.copyWith(
-                          name: nameController.text.trim(),
-                          unit: unitController.text.trim(),
-                          variant: variantController.text.trim().isEmpty
-                              ? null
-                              : variantController.text.trim(),
-                          category: categoryController.text.trim().isEmpty
-                              ? null
-                              : categoryController.text.trim(),
-                          description: descController.text.trim().isEmpty
-                              ? null
-                              : descController.text.trim(),
-                          barcode: barcodeController.text.trim().isEmpty
-                              ? null
-                              : barcodeController.text.trim(),
-                        ),
-                      ),
-                    );
+                  InventoryEvent.editItem(
+                    item: item.copyWith(
+                      name: nameController.text.trim(),
+                      unit: unitController.text.trim(),
+                      variant: variantController.text.trim().isEmpty
+                          ? null
+                          : variantController.text.trim(),
+                      category: categoryController.text.trim().isEmpty
+                          ? null
+                          : categoryController.text.trim(),
+                      description: descController.text.trim().isEmpty
+                          ? null
+                          : descController.text.trim(),
+                      barcode: barcodeController.text.trim().isEmpty
+                          ? null
+                          : barcodeController.text.trim(),
+                    ),
+                  ),
+                );
                 Navigator.pop(ctx);
               },
               child: const Text('Update'),
@@ -486,7 +774,7 @@ class _StockInScreenState extends State<StockInScreen> {
                     label: 'Item Name *',
                     prefixIcon: Icons.inventory_2_outlined,
                     validator: (v) =>
-                        v == null || v.trim().isEmpty ? 'Required' : null,
+                    v == null || v.trim().isEmpty ? 'Required' : null,
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
@@ -500,7 +788,7 @@ class _StockInScreenState extends State<StockInScreen> {
                     label: 'Unit * (e.g. kg, pcs, L)',
                     prefixIcon: Icons.straighten_outlined,
                     validator: (v) =>
-                        v == null || v.trim().isEmpty ? 'Required' : null,
+                    v == null || v.trim().isEmpty ? 'Required' : null,
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
@@ -536,48 +824,8 @@ class _StockInScreenState extends State<StockInScreen> {
                             scanned.isNotEmpty &&
                             context.mounted) {
                           barcodeController.text = scanned;
-                          _showEditItemDialog(
-                            context,
-                            item.copyWith(
-                              name: nameController.text,
-                              unit: unitController.text,
-                              variant: variantController.text.trim().isEmpty
-                                  ? null
-                                  : variantController.text.trim(),
-                              category: categoryController.text.trim().isEmpty
-                                  ? null
-                                  : categoryController.text.trim(),
-                              description: descController.text.trim().isEmpty
-                                  ? null
-                                  : descController.text.trim(),
-                              barcode: scanned,
-                            ),
-                          );
                         }
                       },
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.withOpacity(0.2)),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.info_outline,
-                            color: Colors.grey, size: 16),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'Current stock: ${item.currentStock} ${item.unit}. Stock count is not editable here.',
-                            style: const TextStyle(
-                                fontSize: 12, color: Colors.grey),
-                          ),
-                        ),
-                      ],
                     ),
                   ),
                 ],
@@ -590,14 +838,14 @@ class _StockInScreenState extends State<StockInScreen> {
   }
 
   void _showAddItemDialogPrefilled(
-    BuildContext context, {
-    String name = '',
-    String variant = '',
-    String unit = '',
-    String category = '',
-    String desc = '',
-    String barcode = '',
-  }) {
+      BuildContext context, {
+        String name = '',
+        String variant = '',
+        String unit = '',
+        String category = '',
+        String desc = '',
+        String barcode = '',
+      }) {
     final nameController = TextEditingController(text: name);
     final variantController = TextEditingController(text: variant);
     final unitController = TextEditingController(text: unit);
@@ -617,26 +865,26 @@ class _StockInScreenState extends State<StockInScreen> {
               onPressed: () {
                 if (!formKey.currentState!.validate()) return;
                 context.read<InventoryBloc>().add(
-                      InventoryEvent.addItem(
-                        item: ItemEntity(
-                          itemId: '',
-                          name: nameController.text.trim(),
-                          unit: unitController.text.trim(),
-                          variant: variantController.text.trim().isEmpty
-                              ? null
-                              : variantController.text.trim(),
-                          category: categoryController.text.trim().isEmpty
-                              ? null
-                              : categoryController.text.trim(),
-                          description: descController.text.trim().isEmpty
-                              ? null
-                              : descController.text.trim(),
-                          barcode: barcodeController.text.trim().isEmpty
-                              ? null
-                              : barcodeController.text.trim(),
-                        ),
-                      ),
-                    );
+                  InventoryEvent.addItem(
+                    item: ItemEntity(
+                      itemId: '',
+                      name: nameController.text.trim(),
+                      unit: unitController.text.trim(),
+                      variant: variantController.text.trim().isEmpty
+                          ? null
+                          : variantController.text.trim(),
+                      category: categoryController.text.trim().isEmpty
+                          ? null
+                          : categoryController.text.trim(),
+                      description: descController.text.trim().isEmpty
+                          ? null
+                          : descController.text.trim(),
+                      barcode: barcodeController.text.trim().isEmpty
+                          ? null
+                          : barcodeController.text.trim(),
+                    ),
+                  ),
+                );
                 Navigator.pop(ctx);
               },
               child: const Text('Save'),
@@ -653,7 +901,7 @@ class _StockInScreenState extends State<StockInScreen> {
                     label: 'Item Name *',
                     prefixIcon: Icons.inventory_2_outlined,
                     validator: (v) =>
-                        v == null || v.trim().isEmpty ? 'Required' : null,
+                    v == null || v.trim().isEmpty ? 'Required' : null,
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
@@ -667,7 +915,7 @@ class _StockInScreenState extends State<StockInScreen> {
                     label: 'Unit * (e.g. kg, pcs, L)',
                     prefixIcon: Icons.straighten_outlined,
                     validator: (v) =>
-                        v == null || v.trim().isEmpty ? 'Required' : null,
+                    v == null || v.trim().isEmpty ? 'Required' : null,
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
@@ -701,11 +949,14 @@ class _StockInScreenState extends State<StockInScreen> {
     final poController = TextEditingController();
     final unitPriceController = TextEditingController();
     final sellingPriceController = TextEditingController();
+
+    DiscountType discountType = DiscountType.percentage;
     final discountController = TextEditingController(text: '0');
+
     final qtyController = TextEditingController();
     final notesController = TextEditingController();
     final dateController =
-        TextEditingController(text: DateFormat.yMMMd().format(DateTime.now()));
+    TextEditingController(text: DateFormat.yMMMd().format(DateTime.now()));
     final formKey = GlobalKey<FormState>();
     final items = context.read<InventoryBloc>().state.items;
     final user = context.read<AuthBloc>().state.user;
@@ -713,7 +964,6 @@ class _StockInScreenState extends State<StockInScreen> {
     String? selectedItemId =
         preSelectedItemId ?? (items.isNotEmpty ? items.first.itemId : null);
     DateTime selectedDate = DateTime.now();
-    DiscountType discountType = DiscountType.flat;
 
     _showFullScreen(
       context: context,
@@ -721,43 +971,45 @@ class _StockInScreenState extends State<StockInScreen> {
         builder: (ctx, setDialogState) {
           final sellingPrice =
               double.tryParse(sellingPriceController.text) ?? 0;
-          final discountValue = double.tryParse(discountController.text) ?? 0;
-          final discountAmount = discountType == DiscountType.percentage
-              ? sellingPrice * (discountValue / 100)
-              : discountValue;
-          final effectivePrice = sellingPrice - discountAmount;
+          final discountInput = double.tryParse(discountController.text) ?? 0;
+          final calculatedFlatDiscount = discountType == DiscountType.percentage
+              ? sellingPrice * (discountInput / 100)
+              : discountInput;
+          final effectivePrice = sellingPrice - calculatedFlatDiscount;
 
           return _buildFormScaffold(
-            title: 'Add Stock',
+            title: 'Add New Stock Batch',
             dialogContext: ctx,
             actions: [
               TextButton(
                 onPressed: () {
                   if (!formKey.currentState!.validate()) return;
                   final finalSellingPrice =
-                      double.parse(sellingPriceController.text.trim());
+                  double.parse(sellingPriceController.text.trim());
                   final finalDiscountValue =
                       double.tryParse(discountController.text.trim()) ?? 0;
-                  final flatDiscount = discountType == DiscountType.percentage
+                  final flatDiscountToSave =
+                  discountType == DiscountType.percentage
                       ? finalSellingPrice * (finalDiscountValue / 100)
                       : finalDiscountValue;
 
                   context.read<InventoryBloc>().add(
-                        AddStock(
-                          itemId: selectedItemId!,
-                          poNumber: poController.text.trim(),
-                          unitPrice:
-                              double.parse(unitPriceController.text.trim()),
-                          sellingPrice: finalSellingPrice,
-                          quantity: int.parse(qtyController.text.trim()),
-                          receivedDate: selectedDate,
-                          createdBy: user?.uid ?? '',
-                          discount: flatDiscount <= 0 ? 0.00 : flatDiscount,
-                          notes: notesController.text.trim().isEmpty
-                              ? null
-                              : notesController.text.trim(),
-                        ),
-                      );
+                    AddStock(
+                      itemId: selectedItemId!,
+                      poNumber: poController.text.trim(),
+                      unitPrice:
+                      double.parse(unitPriceController.text.trim()),
+                      sellingPrice: finalSellingPrice,
+                      quantity: int.parse(qtyController.text.trim()),
+                      receivedDate: selectedDate,
+                      createdBy: user?.uid ?? '',
+                      discount:
+                      flatDiscountToSave <= 0 ? 0.00 : flatDiscountToSave,
+                      notes: notesController.text.trim().isEmpty
+                          ? null
+                          : notesController.text.trim(),
+                    ),
+                  );
                   Navigator.pop(ctx);
                 },
                 child: const Text('Save'),
@@ -775,18 +1027,18 @@ class _StockInScreenState extends State<StockInScreen> {
                       prefixIcon: Icons.inventory_2_outlined,
                       items: items
                           .map((item) => DropdownMenuItem(
-                                value: item.itemId,
-                                child: Text(
-                                  item.variant != null
-                                      ? '${item.name} — ${item.variant}'
-                                      : item.name,
-                                ),
-                              ))
+                        value: item.itemId,
+                        child: Text(
+                          item.variant != null
+                              ? '${item.name} — ${item.variant}'
+                              : item.name,
+                        ),
+                      ))
                           .toList(),
                       onChanged: (val) =>
                           setDialogState(() => selectedItemId = val),
                       validator: (v) =>
-                          v == null ? 'Please select an item' : null,
+                      v == null ? 'Please select an item' : null,
                     ),
                     const SizedBox(height: 16),
                     CustomTextField(
@@ -800,7 +1052,7 @@ class _StockInScreenState extends State<StockInScreen> {
                       label: 'Unit Price (Cost) *',
                       prefixIcon: Icons.attach_money_outlined,
                       keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      const TextInputType.numberWithOptions(decimal: true),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return 'Required';
                         if (double.tryParse(v) == null) return 'Invalid price';
@@ -813,7 +1065,7 @@ class _StockInScreenState extends State<StockInScreen> {
                       label: 'Selling Price *',
                       prefixIcon: Icons.sell_outlined,
                       keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      const TextInputType.numberWithOptions(decimal: true),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return 'Required';
                         if (double.tryParse(v) == null) return 'Invalid price';
@@ -822,7 +1074,6 @@ class _StockInScreenState extends State<StockInScreen> {
                       onEditingComplete: () => setDialogState(() {}),
                     ),
                     const SizedBox(height: 16),
-                    // ── Discount field + type toggle ──────────────────
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -830,20 +1081,11 @@ class _StockInScreenState extends State<StockInScreen> {
                           child: CustomTextField(
                             controller: discountController,
                             label: discountType == DiscountType.percentage
-                                ? 'Discount % (optional)'
-                                : 'Discount flat (optional)',
+                                ? 'Discount %'
+                                : 'Discount flat',
                             prefixIcon: Icons.discount_outlined,
                             keyboardType: const TextInputType.numberWithOptions(
                                 decimal: true),
-                            validator: (v) {
-                              if (v == null || v.trim().isEmpty) return null;
-                              final d = double.tryParse(v);
-                              if (d == null) return 'Invalid value';
-                              if (discountType == DiscountType.percentage &&
-                                  d > 100) return 'Max 100%';
-                              if (d < 0) return 'Cannot be negative';
-                              return null;
-                            },
                             onEditingComplete: () => setDialogState(() {}),
                           ),
                         ),
@@ -853,14 +1095,14 @@ class _StockInScreenState extends State<StockInScreen> {
                             const Text(
                               'Type',
                               style:
-                                  TextStyle(fontSize: 11, color: Colors.grey),
+                              TextStyle(fontSize: 11, color: Colors.grey),
                             ),
                             const SizedBox(height: 4),
                             Container(
                               decoration: BoxDecoration(
                                 border: Border.all(
                                     color:
-                                        AppTheme.primaryColor.withOpacity(0.3)),
+                                    AppTheme.primaryColor.withOpacity(0.3)),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
@@ -870,14 +1112,14 @@ class _StockInScreenState extends State<StockInScreen> {
                                     label: 'Flat',
                                     selected: discountType == DiscountType.flat,
                                     onTap: () => setDialogState(
-                                        () => discountType = DiscountType.flat),
+                                            () => discountType = DiscountType.flat),
                                   ),
                                   _buildDiscountTypeBtn(
                                     label: '%',
                                     selected:
-                                        discountType == DiscountType.percentage,
+                                    discountType == DiscountType.percentage,
                                     onTap: () => setDialogState(() =>
-                                        discountType = DiscountType.percentage),
+                                    discountType = DiscountType.percentage),
                                   ),
                                 ],
                               ),
@@ -886,7 +1128,6 @@ class _StockInScreenState extends State<StockInScreen> {
                         ),
                       ],
                     ),
-                    // ── Live price preview ────────────────────────────
                     if (sellingPrice > 0) ...[
                       const SizedBox(height: 12),
                       Container(
@@ -902,46 +1143,35 @@ class _StockInScreenState extends State<StockInScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Selling Price',
+                                const Text('Base Selling Price',
                                     style: TextStyle(
                                         fontSize: 13, color: Colors.grey)),
                                 Text(sellingPrice.toStringAsFixed(2),
                                     style: const TextStyle(fontSize: 13)),
                               ],
                             ),
-                            if (discountAmount > 0) ...[
-                              const SizedBox(height: 6),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    discountType == DiscountType.percentage
-                                        ? 'Discount (${discountValue.toStringAsFixed(0)}% of ${sellingPrice.toStringAsFixed(2)})'
-                                        : 'Discount (flat)',
+                            const SizedBox(height: 6),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('Discount Amount',
+                                    style: TextStyle(
+                                        fontSize: 13, color: Colors.orange)),
+                                Text(
+                                    '- ${calculatedFlatDiscount.toStringAsFixed(2)}',
                                     style: const TextStyle(
-                                        fontSize: 13, color: Colors.orange),
-                                  ),
-                                  Text(
-                                    '- ${discountAmount.toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                        fontSize: 13, color: Colors.orange),
-                                  ),
-                                ],
-                              ),
-                            ],
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 6),
-                              child: Divider(height: 1),
+                                        fontSize: 13, color: Colors.orange)),
+                              ],
                             ),
+                            const Divider(),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 const Text(
-                                  'Effective Price',
+                                  'Net Price',
                                   style: TextStyle(
                                       fontSize: 13,
-                                      fontWeight: FontWeight.w600),
+                                      fontWeight: FontWeight.bold),
                                 ),
                                 Text(
                                   effectivePrice.toStringAsFixed(2),
@@ -996,7 +1226,7 @@ class _StockInScreenState extends State<StockInScreen> {
                           prefixIcon: Icons.calendar_today_outlined,
                           suffixIcon: const Icon(Icons.arrow_drop_down),
                           validator: (v) =>
-                              v == null || v.trim().isEmpty ? 'Required' : null,
+                          v == null || v.trim().isEmpty ? 'Required' : null,
                         ),
                       ),
                     ),
@@ -1071,19 +1301,19 @@ class _StockInScreenState extends State<StockInScreen> {
                 );
                 if (scanned != null && scanned.isNotEmpty && context.mounted) {
                   context.read<InventoryBloc>().add(
-                        DispatchByBarcode(
-                          barcode: scanned,
-                          quantity: int.parse(qtyController.text.trim()),
-                          createdBy: user?.uid ?? '',
-                          dispatchedTo:
-                              dispatchedToController.text.trim().isEmpty
-                                  ? null
-                                  : dispatchedToController.text.trim(),
-                          notes: notesController.text.trim().isEmpty
-                              ? null
-                              : notesController.text.trim(),
-                        ),
-                      );
+                    DispatchByBarcode(
+                      barcode: scanned,
+                      quantity: int.parse(qtyController.text.trim()),
+                      createdBy: user?.uid ?? '',
+                      dispatchedTo:
+                      dispatchedToController.text.trim().isEmpty
+                          ? null
+                          : dispatchedToController.text.trim(),
+                      notes: notesController.text.trim().isEmpty
+                          ? null
+                          : notesController.text.trim(),
+                    ),
+                  );
                 }
               },
             ),
@@ -1109,9 +1339,9 @@ class _StockInScreenState extends State<StockInScreen> {
                         SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'Scan the item barcode/QR code then confirm the quantity to dispatch.',
+                            'Scan barcode then confirm the quantity to dispatch.',
                             style:
-                                TextStyle(fontSize: 13, color: Colors.orange),
+                            TextStyle(fontSize: 13, color: Colors.orange),
                           ),
                         ),
                       ],
@@ -1155,10 +1385,10 @@ class _StockInScreenState extends State<StockInScreen> {
   }
 
   Future<void> _showVariantPickerDialog(
-    BuildContext context, {
-    required List<ItemEntity> matches,
-    required PendingDispatch pending,
-  }) {
+      BuildContext context, {
+        required List<ItemEntity> matches,
+        required PendingDispatch pending,
+      }) {
     return _showFullScreen<void>(
       context: context,
       child: Scaffold(
@@ -1183,7 +1413,7 @@ class _StockInScreenState extends State<StockInScreen> {
                   color: AppTheme.primaryColor.withOpacity(0.06),
                   borderRadius: BorderRadius.circular(12),
                   border:
-                      Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                  Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
                 ),
                 child: Row(
                   children: [
@@ -1192,7 +1422,7 @@ class _StockInScreenState extends State<StockInScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Multiple variants found for this barcode. Select which one to dispatch ${pending.quantity} unit(s) from:',
+                        'Multiple variants found. Select one to dispatch ${pending.quantity} unit(s) from:',
                         style: const TextStyle(
                             fontSize: 13, color: AppTheme.primaryColor),
                       ),
@@ -1206,61 +1436,61 @@ class _StockInScreenState extends State<StockInScreen> {
                   children: matches
                       .map(
                         (item) => Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                            leading: CircleAvatar(
-                              backgroundColor:
-                                  AppTheme.primaryColor.withOpacity(0.1),
-                              child: Text(
-                                item.name.substring(0, 1).toUpperCase(),
-                                style: const TextStyle(
-                                  color: AppTheme.primaryColor,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                      margin: const EdgeInsets.only(bottom: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        leading: CircleAvatar(
+                          backgroundColor:
+                          AppTheme.primaryColor.withOpacity(0.1),
+                          child: Text(
+                            item.name.substring(0, 1).toUpperCase(),
+                            style: const TextStyle(
+                              color: AppTheme.primaryColor,
+                              fontWeight: FontWeight.bold,
                             ),
-                            title: Text(
-                              item.variant != null
-                                  ? '${item.name} — ${item.variant}'
-                                  : item.name,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                            subtitle: Text(
-                              'Stock: ${item.currentStock} ${item.unit}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: item.currentStock >= pending.quantity
-                                    ? Colors.green
-                                    : Colors.red,
-                              ),
-                            ),
-                            trailing: item.currentStock >= pending.quantity
-                                ? const Icon(Icons.check_circle_outline,
-                                    color: Colors.green)
-                                : const Icon(Icons.warning_amber_outlined,
-                                    color: Colors.orange),
-                            onTap: item.currentStock < pending.quantity
-                                ? null
-                                : () {
-                                    Navigator.pop(context);
-                                    context.read<InventoryBloc>().add(
-                                          DispatchByItem(
-                                            itemId: item.itemId,
-                                            quantity: pending.quantity,
-                                            createdBy: pending.createdBy,
-                                            dispatchedTo: pending.dispatchedTo,
-                                            notes: pending.notes,
-                                          ),
-                                        );
-                                  },
                           ),
                         ),
-                      )
+                        title: Text(
+                          item.variant != null
+                              ? '${item.name} — ${item.variant}'
+                              : item.name,
+                          style:
+                          const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Text(
+                          'Stock: ${item.currentStock} ${item.unit}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: item.currentStock >= pending.quantity
+                                ? Colors.green
+                                : Colors.red,
+                          ),
+                        ),
+                        trailing: item.currentStock >= pending.quantity
+                            ? const Icon(Icons.check_circle_outline,
+                            color: Colors.green)
+                            : const Icon(Icons.warning_amber_outlined,
+                            color: Colors.orange),
+                        onTap: item.currentStock < pending.quantity
+                            ? null
+                            : () {
+                          Navigator.pop(context);
+                          context.read<InventoryBloc>().add(
+                            DispatchByItem(
+                              itemId: item.itemId,
+                              quantity: pending.quantity,
+                              createdBy: pending.createdBy,
+                              dispatchedTo: pending.dispatchedTo,
+                              notes: pending.notes,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  )
                       .toList(),
                 ),
               ),

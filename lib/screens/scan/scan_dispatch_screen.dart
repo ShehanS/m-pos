@@ -82,17 +82,21 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
       BuildContext context, ItemEntity item, List<LotEntity> lots) {
     setState(() {
       final existingIndex =
-          _billItems.indexWhere((b) => b.item.itemId == item.itemId);
+      _billItems.indexWhere((b) => b.item.itemId == item.itemId);
       if (existingIndex >= 0) {
         _billItems[existingIndex].quantity += 1;
       } else {
         final defaultLot = lots.isNotEmpty ? lots.first : null;
+        double displayDisc = 0;
+        if (defaultLot != null && defaultLot.sellingPrice > 0) {
+          displayDisc = ((defaultLot.discount ?? 0) / defaultLot.sellingPrice) * 100;
+        }
         _billItems.add(BillItem(
           item: item,
           lots: lots,
           quantity: 1,
           sellingPrice: defaultLot?.sellingPrice ?? 0,
-          discount: defaultLot?.discount ?? 0,
+          discount: displayDisc,
           discountType: DiscountType.percentage,
         ));
       }
@@ -112,7 +116,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
           ],
         ),
         backgroundColor: Colors.green,
-        duration: const Duration(seconds: 1),
+        duration: const Duration(milliseconds: 800),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -122,7 +126,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
   Widget build(BuildContext context) {
     final user = context.watch<UserBloc>().state.user;
     _selectedBusiness = user?.business?.firstWhere(
-        (b) => b.businessName == user.activeBusiness,
+            (b) => b.businessName == user.activeBusiness,
         orElse: () => user.business!.first);
     return Scaffold(
       appBar: AppBar(
@@ -137,21 +141,31 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
             TextButton.icon(
               icon: const Icon(Icons.receipt_long_outlined, size: 18),
               label: const Text('Confirm'),
-              onPressed: () => showDialog(
-                context: context,
-                builder: (context) {
-                  return BlocProvider.value(
-                      value: (context).read<MasterDataBloc>(),
-                      child: Dialog(
-                        insetPadding: EdgeInsets.zero,
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: double.infinity,
-                          child: PrintTemplate(billItems: _billItems),
-                        ),
-                      ));
-                },
-              ),
+              onPressed: () {
+                if (_billItems.isNotEmpty && context.mounted) {
+                  for (final billItem in _billItems) {
+                    context.read<InventoryBloc>().add(Dispatch(
+                        itemId: billItem.item.itemId,
+                        quantity: billItem.quantity,
+                        createdBy: user!.email));
+                  }
+                }
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return BlocProvider.value(
+                        value: (context).read<MasterDataBloc>(),
+                        child: Dialog(
+                          insetPadding: EdgeInsets.zero,
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: double.infinity,
+                            child: PrintTemplate(billItems: _billItems),
+                          ),
+                        ));
+                  },
+                );
+              },
             ),
           ],
           _buildBusinessAppBarButton(),
@@ -169,13 +183,13 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                 : () => _startScan(context),
             icon: _isScanning
                 ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white))
-                : const Icon(Icons.qr_code_scanner),
-            label: Text(_isScanning ? 'Scanning...' : 'Scan Item'),
-            backgroundColor: _isScanning ? Colors.grey : Colors.deepPurple,
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: Colors.white))
+                : const Icon(Icons.qr_code_scanner, color: Colors.white),
+            label: Text(_isScanning ? 'Scanning...' : 'Scan Item', style: const TextStyle(color: Colors.white)),
+            backgroundColor: _isScanning ? Colors.grey : Colors.deepPurpleAccent,
           ),
         ),
       ),
@@ -202,8 +216,8 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (!mounted) return;
                 context.read<InventoryBloc>().add(
-                      LoadLotsForItem(itemId: _pendingItem!.itemId),
-                    );
+                  LoadLotsForItem(itemId: _pendingItem!.itemId),
+                );
               });
             } else {
               _pendingMatches = state.barcodeMatches;
@@ -233,25 +247,13 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
 
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (!mounted) return;
-              final existingIndex =
-                  _billItems.indexWhere((b) => b.item.itemId == item.itemId);
 
-              if (existingIndex >= 0) {
-                _autoAddToBill(context, item, lots);
-                _itemDetailShowing = false;
-                _pendingItem = null;
-                context.read<InventoryBloc>().add(const ClearPendingDispatch());
-                _continueScan(context);
-              } else {
-                _showItemDetailSheet(context, item, lots).then((_) {
-                  _itemDetailShowing = false;
-                  _pendingItem = null;
-                  context
-                      .read<InventoryBloc>()
-                      .add(const ClearPendingDispatch());
-                  _continueScan(context);
-                });
-              }
+              // AUTO ADD ALWAYS - Bypasses popup detail sheet for continuous scanning
+              _autoAddToBill(context, item, lots);
+              _itemDetailShowing = false;
+              _pendingItem = null;
+              context.read<InventoryBloc>().add(const ClearPendingDispatch());
+              _continueScan(context);
             });
           }
 
@@ -272,18 +274,18 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.receipt_long_outlined,
-                  size: 80, color: Colors.grey.withOpacity(0.4))
+              size: 80, color: Colors.grey.withOpacity(0.4))
               .animate()
               .scale(begin: const Offset(0.8, 0.8), curve: Curves.easeOutBack)
               .fadeIn(),
           const SizedBox(height: 16),
           Text('No items scanned yet',
-                  style: Theme.of(context).textTheme.headlineMedium)
+              style: Theme.of(context).textTheme.headlineMedium)
               .animate()
               .fadeIn(delay: 200.ms),
           const SizedBox(height: 8),
           Text('Tap "Scan Item" to start',
-                  style: Theme.of(context).textTheme.bodyMedium)
+              style: Theme.of(context).textTheme.bodyMedium)
               .animate()
               .fadeIn(delay: 300.ms),
         ],
@@ -313,7 +315,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                         children: [
                           CircleAvatar(
                             backgroundColor:
-                                AppTheme.primaryColor.withOpacity(0.1),
+                            AppTheme.primaryColor.withOpacity(0.1),
                             child: Text(
                               b.item.name.substring(0, 1).toUpperCase(),
                               style: const TextStyle(
@@ -377,7 +379,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                           color: Colors.grey.withOpacity(0.05),
                           borderRadius: BorderRadius.circular(8),
                           border:
-                              Border.all(color: Colors.grey.withOpacity(0.1)),
+                          Border.all(color: Colors.grey.withOpacity(0.1)),
                         ),
                         child: Column(
                           children: [
@@ -397,7 +399,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                               const SizedBox(height: 4),
                               Row(
                                 mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     b.discountType == DiscountType.percentage
@@ -495,7 +497,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
               Text(
                 _subtotalBeforeDiscount.toStringAsFixed(2),
                 style:
-                    const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
               ),
             ],
           ),
@@ -582,52 +584,52 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: matches
                     .map((item) => Card(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor:
-                                  AppTheme.primaryColor.withOpacity(0.1),
-                              child: Text(
-                                item.name.substring(0, 1).toUpperCase(),
-                                style: const TextStyle(
-                                    color: AppTheme.primaryColor,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            title: Text(
-                              item.variant != null
-                                  ? '${item.name} — ${item.variant}'
-                                  : item.name,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                            subtitle: Text(
-                              'Stock: ${item.currentStock} ${item.unit}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: item.currentStock > 0
-                                    ? Colors.green
-                                    : Colors.red,
-                              ),
-                            ),
-                            trailing: item.currentStock > 0
-                                ? const Icon(Icons.arrow_forward_ios, size: 16)
-                                : const Icon(Icons.warning_amber_outlined,
-                                    color: Colors.orange),
-                            onTap: item.currentStock <= 0
-                                ? null
-                                : () {
-                                    Navigator.pop(ctx);
-                                    _pendingItem = item;
-                                    _itemDetailShowing = true;
-                                    context.read<InventoryBloc>().add(
-                                          LoadLotsForItem(itemId: item.itemId),
-                                        );
-                                  },
-                          ),
-                        ))
+                  margin: const EdgeInsets.only(bottom: 10),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor:
+                      AppTheme.primaryColor.withOpacity(0.1),
+                      child: Text(
+                        item.name.substring(0, 1).toUpperCase(),
+                        style: const TextStyle(
+                            color: AppTheme.primaryColor,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    title: Text(
+                      item.variant != null
+                          ? '${item.name} — ${item.variant}'
+                          : item.name,
+                      style:
+                      const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text(
+                      'Stock: ${item.currentStock} ${item.unit}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: item.currentStock > 0
+                            ? Colors.green
+                            : Colors.red,
+                      ),
+                    ),
+                    trailing: item.currentStock > 0
+                        ? const Icon(Icons.arrow_forward_ios, size: 16)
+                        : const Icon(Icons.warning_amber_outlined,
+                        color: Colors.orange),
+                    onTap: item.currentStock <= 0
+                        ? null
+                        : () {
+                      Navigator.pop(ctx);
+                      _pendingItem = item;
+                      _itemDetailShowing = true;
+                      context.read<InventoryBloc>().add(
+                        LoadLotsForItem(itemId: item.itemId),
+                      );
+                    },
+                  ),
+                ))
                     .toList(),
               ),
             ),
@@ -638,28 +640,30 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
   }
 
   Future<void> _showItemDetailSheet(
-    BuildContext context,
-    ItemEntity item,
-    List<LotEntity> lots,
-  ) {
+      BuildContext context,
+      ItemEntity item,
+      List<LotEntity> lots,
+      ) {
     final defaultLot = lots.isNotEmpty ? lots.first : null;
 
     final sellingPriceController = TextEditingController(
       text: defaultLot?.sellingPrice.toStringAsFixed(2) ?? '',
     );
 
+    double displayDisc = 0;
+    if (defaultLot != null && defaultLot.sellingPrice > 0) {
+      displayDisc = ((defaultLot.discount ?? 0) / defaultLot.sellingPrice) * 100;
+    }
+
     final discountController = TextEditingController(
-      text: defaultLot?.discount != null && defaultLot!.discount! > 0
-          ? defaultLot.discount!.toStringAsFixed(2)
-          : '0',
+      text: displayDisc > 0 ? displayDisc.toStringAsFixed(2) : '0',
     );
 
     final qtyController = TextEditingController(text: '1');
     final formKey = GlobalKey<FormState>();
 
     double sellingPrice = defaultLot?.sellingPrice ?? 0;
-
-    double discount = defaultLot?.discount ?? 0;
+    double discount = displayDisc;
     int qty = 1;
     DiscountType discountType = DiscountType.percentage;
     LotEntity? selectedLot = defaultLot;
@@ -681,7 +685,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
 
           return Padding(
             padding:
-                EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+            EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
             child: DraggableScrollableSheet(
               expand: false,
               initialChildSize: 0.85,
@@ -709,7 +713,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                         CircleAvatar(
                           radius: 24,
                           backgroundColor:
-                              AppTheme.primaryColor.withOpacity(0.1),
+                          AppTheme.primaryColor.withOpacity(0.1),
                           child: Text(
                             item.name.substring(0, 1).toUpperCase(),
                             style: const TextStyle(
@@ -758,12 +762,16 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                             setSheetState(() {
                               selectedLot = lot;
                               sellingPrice = lot.sellingPrice;
-                              discount = lot.discount ?? 0;
-                              discountType = DiscountType.flat;
+                              double calculatedDisc = 0;
+                              if (lot.sellingPrice > 0) {
+                                calculatedDisc = ((lot.discount ?? 0) / lot.sellingPrice) * 100;
+                              }
+                              discount = calculatedDisc;
+                              discountType = DiscountType.percentage;
                               sellingPriceController.text =
                                   lot.sellingPrice.toStringAsFixed(2);
                               discountController.text =
-                                  (lot.discount ?? 0).toStringAsFixed(2);
+                                  calculatedDisc.toStringAsFixed(2);
                             });
                           },
                           child: Container(
@@ -797,7 +805,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         lot.poNumber.isNotEmpty
@@ -877,7 +885,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                       label: 'Selling Price *',
                       prefixIcon: Icons.sell_outlined,
                       keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      const TextInputType.numberWithOptions(decimal: true),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return 'Required';
                         if (double.tryParse(v) == null) return 'Invalid price';
@@ -925,7 +933,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                               decoration: BoxDecoration(
                                 border: Border.all(
                                     color:
-                                        AppTheme.primaryColor.withOpacity(0.3)),
+                                    AppTheme.primaryColor.withOpacity(0.3)),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
@@ -937,18 +945,18 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                                     onTap: () => setSheetState(() {
                                       discountType = DiscountType.flat;
                                       discount = double.tryParse(
-                                              discountController.text) ??
+                                          discountController.text) ??
                                           0;
                                     }),
                                   ),
                                   _buildDiscountTypeBtn(
                                     label: '%',
                                     selected:
-                                        discountType == DiscountType.percentage,
+                                    discountType == DiscountType.percentage,
                                     onTap: () => setSheetState(() {
                                       discountType = DiscountType.percentage;
                                       discount = double.tryParse(
-                                              discountController.text) ??
+                                          discountController.text) ??
                                           0;
                                     }),
                                   ),
@@ -989,7 +997,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                               children: [
                                 Text(
                                   discountType == DiscountType.percentage
-                                      ? 'Discount (${discount.toStringAsFixed(0)}% of ${subtotal.toStringAsFixed(2)})'
+                                      ? 'Discount (${discount.toStringAsFixed(2)}% of ${subtotal.toStringAsFixed(2)})'
                                       : 'Discount (flat)',
                                   style: const TextStyle(
                                       color: Colors.orange, fontSize: 13),
@@ -1049,14 +1057,14 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                               final finalQty =
                                   int.tryParse(qtyController.text) ?? 1;
                               final finalPrice = double.tryParse(
-                                      sellingPriceController.text) ??
+                                  sellingPriceController.text) ??
                                   0;
                               final finalDiscount =
                                   double.tryParse(discountController.text) ?? 0;
 
                               setState(() {
                                 final existingIndex = _billItems.indexWhere(
-                                    (b) => b.item.itemId == item.itemId);
+                                        (b) => b.item.itemId == item.itemId);
                                 if (existingIndex >= 0) {
                                   _billItems[existingIndex].quantity +=
                                       finalQty;
@@ -1121,11 +1129,11 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
   Widget _buildBusinessAppBarButton() {
     return TextButton.icon(
       onPressed: () => _showBusinessPickerDialog(context),
-      icon: const Icon(Icons.store_outlined, size: 18, color: Colors.white),
-      label: Text(
+      icon: const Icon(Icons.store_outlined, size: 18, color: Colors.deepPurpleAccent),
+      label:Text(
         _selectedBusiness?.businessName ?? 'Select Business',
         style: const TextStyle(
-          color: Colors.white,
+          color: Colors.deepPurpleAccent,
           fontSize: 12,
           fontWeight: FontWeight.w500,
         ),
@@ -1154,93 +1162,93 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
           width: double.maxFinite,
           child: businesses.isEmpty
               ? const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.business_center_outlined,
-                          size: 48, color: Colors.grey),
-                      SizedBox(height: 8),
-                      Text(
-                        'No businesses found.\nAdd one in Settings.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ],
+            padding: EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.business_center_outlined,
+                    size: 48, color: Colors.grey),
+                SizedBox(height: 8),
+                Text(
+                  'No businesses found.\nAdd one in Settings.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ],
+            ),
+          )
+              : ListView.builder(
+            shrinkWrap: true,
+            itemCount: businesses.length,
+            itemBuilder: (_, index) {
+              final b = businesses[index];
+              final isSelected = _selectedBusiness?.uid == b.uid;
+              return ListTile(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                tileColor: isSelected
+                    ? AppTheme.primaryColor.withOpacity(0.08)
+                    : null,
+                leading: b.logoUrl != null
+                    ? ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: Image.network(
+                    b.logoUrl!,
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) =>
+                    const CircleAvatar(
+                      child: Icon(Icons.business, size: 20),
+                    ),
                   ),
                 )
-              : ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: businesses.length,
-                  itemBuilder: (_, index) {
-                    final b = businesses[index];
-                    final isSelected = _selectedBusiness?.uid == b.uid;
-                    return ListTile(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                      tileColor: isSelected
-                          ? AppTheme.primaryColor.withOpacity(0.08)
-                          : null,
-                      leading: b.logoUrl != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(6),
-                              child: Image.network(
-                                b.logoUrl!,
-                                width: 40,
-                                height: 40,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
-                                    const CircleAvatar(
-                                  child: Icon(Icons.business, size: 20),
-                                ),
-                              ),
-                            )
-                          : CircleAvatar(
-                              backgroundColor:
-                                  AppTheme.primaryColor.withOpacity(0.1),
-                              child: Text(
-                                b.businessName.substring(0, 1).toUpperCase(),
-                                style: const TextStyle(
-                                    color: AppTheme.primaryColor,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                      title: Text(
-                        b.businessName,
-                        style: TextStyle(
-                          fontWeight:
-                              isSelected ? FontWeight.bold : FontWeight.normal,
-                          color: isSelected ? AppTheme.primaryColor : null,
-                        ),
-                      ),
-                      subtitle: b.address != null
-                          ? Text(
-                              b.address!,
-                              style: const TextStyle(fontSize: 11),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            )
-                          : null,
-                      trailing: isSelected
-                          ? const Icon(Icons.check_circle,
-                              color: AppTheme.primaryColor)
-                          : null,
-                      onTap: () {
-                        final currentUser = context.read<UserBloc>().state.user;
-                        if (currentUser == null) return;
-                        setState(() => _selectedBusiness = b);
-                        context.read<UserBloc>().add(
-                              UpdateUser(
-                                uid: currentUser.uid,
-                                user: currentUser.copyWith(
-                                    activeBusiness: b.businessName),
-                              ),
-                            );
-                        Navigator.pop(ctx);
-                      },
-                    );
-                  },
+                    : CircleAvatar(
+                  backgroundColor:
+                  AppTheme.primaryColor.withOpacity(0.1),
+                  child: Text(
+                    b.businessName.substring(0, 1).toUpperCase(),
+                    style: const TextStyle(
+                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.bold),
+                  ),
                 ),
+                title: Text(
+                  b.businessName,
+                  style: TextStyle(
+                    fontWeight:
+                    isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected ? AppTheme.primaryColor : null,
+                  ),
+                ),
+                subtitle: b.address != null
+                    ? Text(
+                  b.address!,
+                  style: const TextStyle(fontSize: 11),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                )
+                    : null,
+                trailing: isSelected
+                    ? const Icon(Icons.check_circle,
+                    color: AppTheme.primaryColor)
+                    : null,
+                onTap: () {
+                  final currentUser = context.read<UserBloc>().state.user;
+                  if (currentUser == null) return;
+                  setState(() => _selectedBusiness = b);
+                  context.read<UserBloc>().add(
+                    UpdateUser(
+                      uid: currentUser.uid,
+                      user: currentUser.copyWith(
+                          activeBusiness: b.businessName),
+                    ),
+                  );
+                  Navigator.pop(ctx);
+                },
+              );
+            },
+          ),
         ),
         actions: [
           TextButton(
@@ -1287,7 +1295,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                   itemBuilder: (_, index) {
                     final b = _billItems[index];
                     final qtyCtrl =
-                        TextEditingController(text: '${b.quantity}');
+                    TextEditingController(text: '${b.quantity}');
                     final priceCtrl = TextEditingController(
                         text: b.sellingPrice.toStringAsFixed(2));
                     final discCtrl = TextEditingController(
@@ -1353,8 +1361,8 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                                     label: 'Price',
                                     prefixIcon: Icons.attach_money_outlined,
                                     keyboardType:
-                                        const TextInputType.numberWithOptions(
-                                            decimal: true),
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
                                     onEditingComplete: () {
                                       setState(() {
                                         _billItems[index].sellingPrice =
@@ -1374,13 +1382,13 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                                   child: CustomTextField(
                                     controller: discCtrl,
                                     label: b.discountType ==
-                                            DiscountType.percentage
+                                        DiscountType.percentage
                                         ? 'Disc %'
                                         : 'Disc (flat)',
                                     prefixIcon: Icons.discount_outlined,
                                     keyboardType:
-                                        const TextInputType.numberWithOptions(
-                                            decimal: true),
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
                                     onEditingComplete: () {
                                       setState(() {
                                         _billItems[index].discount =
@@ -1450,7 +1458,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                                 children: [
                                   Row(
                                     mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                    MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         '${b.quantity} × ${b.sellingPrice.toStringAsFixed(2)}',
@@ -1467,12 +1475,12 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                                     const SizedBox(height: 4),
                                     Row(
                                       mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
+                                      MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
                                           b.discountType ==
-                                                  DiscountType.percentage
-                                              ? 'Discount (${b.discount.toStringAsFixed(0)}%)'
+                                              DiscountType.percentage
+                                              ? 'Discount (${b.discount.toStringAsFixed(2)}%)'
                                               : 'Discount (flat)',
                                           style: const TextStyle(
                                               fontSize: 12,
@@ -1493,7 +1501,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                                   ),
                                   Row(
                                     mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                    MainAxisAlignment.spaceBetween,
                                     children: [
                                       const Text('Line total',
                                           style: TextStyle(
@@ -1524,125 +1532,6 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
       ),
     );
   }
-
-// void _confirmDispatch(BuildContext context) {
-//   final user = context.read<AuthBloc>().state.user;
-//
-//   showDialog(
-//     context: context,
-//     builder: (ctx) => AlertDialog(
-//       title: const Text('Confirm Dispatch'),
-//       shape: RoundedRectangleBorder(
-//           borderRadius: BorderRadius.circular(16)),
-//       content: Column(
-//         mainAxisSize: MainAxisSize.min,
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           Container(
-//             padding: const EdgeInsets.all(12),
-//             decoration: BoxDecoration(
-//               color: AppTheme.primaryColor.withOpacity(0.05),
-//               borderRadius: BorderRadius.circular(10),
-//             ),
-//             child: Column(
-//               children: [
-//                 Row(
-//                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                   children: [
-//                     const Text('Subtotal',
-//                         style: TextStyle(color: Colors.grey)),
-//                     Text(
-//                         _subtotalBeforeDiscount.toStringAsFixed(2)),
-//                   ],
-//                 ),
-//                 if (_totalDiscount > 0) ...[
-//                   const SizedBox(height: 4),
-//                   Row(
-//                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                     children: [
-//                       const Text('Discount',
-//                           style: TextStyle(color: Colors.orange)),
-//                       Text(
-//                         '- ${_totalDiscount.toStringAsFixed(2)}',
-//                         style:
-//                         const TextStyle(color: Colors.orange),
-//                       ),
-//                     ],
-//                   ),
-//                 ],
-//                 const Divider(height: 12),
-//                 Row(
-//                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                   children: [
-//                     const Text('Grand Total',
-//                         style: TextStyle(
-//                             fontWeight: FontWeight.bold)),
-//                     Text(
-//                       _grandTotal.toStringAsFixed(2),
-//                       style: const TextStyle(
-//                         fontWeight: FontWeight.bold,
-//                         fontSize: 18,
-//                         color: AppTheme.primaryColor,
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ],
-//             ),
-//           ),
-//           const SizedBox(height: 12),
-//           CustomTextField(
-//             controller: _dispatchedToController,
-//             label: 'Dispatched To (optional)',
-//             prefixIcon: Icons.person_outline,
-//           ),
-//           const SizedBox(height: 12),
-//           CustomTextField(
-//             controller: _notesController,
-//             label: 'Notes (optional)',
-//             prefixIcon: Icons.notes_outlined,
-//             maxLines: 2,
-//           ),
-//         ],
-//       ),
-//       actions: [
-//         TextButton(
-//           onPressed: () => Navigator.pop(ctx),
-//           child: const Text('Cancel'),
-//         ),
-//         ElevatedButton(
-//           onPressed: () {
-//             Navigator.pop(ctx);
-//             for (final billItem in _billItems) {
-//               context.read<InventoryBloc>().add(
-//                 InventoryEvent.dispatch(
-//                   itemId: billItem.item.itemId,
-//                   quantity: billItem.quantity,
-//                   createdBy: user?.uid ?? '',
-//                   dispatchedTo:
-//                   _dispatchedToController.text.trim().isEmpty
-//                       ? null
-//                       : _dispatchedToController.text.trim(),
-//                   notes: _notesController.text.trim().isEmpty
-//                       ? null
-//                       : _notesController.text.trim(),
-//                 ),
-//               );
-//             }
-//             setState(() => _billItems.clear());
-//             ScaffoldMessenger.of(context).showSnackBar(
-//               const SnackBar(
-//                 content: Text('Dispatch confirmed'),
-//                 backgroundColor: Colors.green,
-//               ),
-//             );
-//           },
-//           child: const Text('Dispatch All'),
-//         ),
-//       ],
-//     ),
-//   );
-// }
 }
 
 class _BarcodeCaptureScreen extends StatelessWidget {

@@ -9,6 +9,7 @@ import 'package:flutter_bloc_app/bloc/printer/printer_bloc.dart';
 import 'package:flutter_bloc_app/bloc/user/user_bloc.dart';
 import 'package:flutter_bloc_app/dtos/bill_item.dart';
 import 'package:flutter_bloc_app/entities/user_entity.dart';
+import 'package:flutter_bloc_app/routes/route_names.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -64,13 +65,12 @@ class _PrintTemplateState extends State<PrintTemplate> {
     _logoUrl = selectedBusiness?.logoUrl;
 
     if (_logoUrl != null && _logoUrl!.isNotEmpty) {
-      // preload image and wait for it to complete before printing
       await _preloadImage(_logoUrl!);
     } else {
       setState(() => _logoLoaded = true);
     }
 
-    // extra frame after setState to ensure UI redraws with loaded image
+
     await Future.delayed(const Duration(milliseconds: 500));
     if (mounted) _print();
   }
@@ -156,7 +156,7 @@ class _PrintTemplateState extends State<PrintTemplate> {
             backgroundColor: Colors.green,
           ),
         );
-        context.pop(context);
+        context.pushReplacement(RouteNames.scanDispatch);
       }
     } catch (e) {
       if (mounted) {
@@ -381,7 +381,7 @@ class _PrintTemplateState extends State<PrintTemplate> {
                                     '- ${b.discountAmount.toStringAsFixed(2)}',
                                     textAlign: TextAlign.right,
                                     style: const TextStyle(
-                                        fontSize: 18, color: Colors.grey),
+                                        fontSize: 18, color: Colors.black),
                                   ),
                                 ),
                               ],
@@ -472,7 +472,7 @@ class _PrintTemplateState extends State<PrintTemplate> {
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 18, color: Colors.black),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 50),
               ],
             ),
           ),
@@ -487,7 +487,7 @@ class _PrintTemplateState extends State<PrintTemplate> {
       child: Text(
         '- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -',
         textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 10, color: Colors.grey),
+        style: TextStyle(fontSize: 10, color: Colors.black),
         maxLines: 1,
         overflow: TextOverflow.clip,
       ),

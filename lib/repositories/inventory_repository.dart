@@ -27,6 +27,16 @@ abstract class InventoryRepository {
     String? notes,
   });
 
+  Future<Either<String, Unit>> editStock({
+    required String itemId,
+    required String lotId,
+    required double unitPrice,
+    required double sellingPrice,
+    required int quantity,
+    double? discount,
+    String? notes,
+  });
+
   Future<Either<String, Unit>> dispatch({
     required String itemId,
     required int quantity,
@@ -66,6 +76,7 @@ abstract class InventoryRepository {
       String userId);
 
   Future<Either<String, List<ItemEntity>>> getItemsByBarcode(String barcode);
+
   Future<Either<String, ItemEntity>> updateItem(ItemEntity item);
 }
 
@@ -113,9 +124,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
       final snapshot = await _items.orderBy('name').get();
       final items = snapshot.docs
           .map((doc) => ItemEntity.fromFirestore(
-        doc.id,
-        doc.data() as Map<String, dynamic>,
-      ))
+                doc.id,
+                doc.data() as Map<String, dynamic>,
+              ))
           .toList();
       return Right(items);
     } catch (e) {
@@ -208,7 +219,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
           .toList();
 
       final totalAvailable =
-      lots.fold(0, (sum, lot) => sum + lot.quantityRemaining);
+          lots.fold(0, (sum, lot) => sum + lot.quantityRemaining);
 
       if (totalAvailable < quantity) {
         return Left(
@@ -318,9 +329,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
       final events = snapshot.docs
           .map((doc) => InventoryEventEntity.fromFirestore(
-        doc.id,
-        doc.data() as Map<String, dynamic>,
-      ))
+                doc.id,
+                doc.data() as Map<String, dynamic>,
+              ))
           .toList();
       return Right(events);
     } catch (e) {
@@ -339,9 +350,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
       final dispatches = snapshot.docs
           .map((doc) => DispatchEventEntity.fromFirestore(
-        doc.id,
-        doc.data() as Map<String, dynamic>,
-      ))
+                doc.id,
+                doc.data() as Map<String, dynamic>,
+              ))
           .toList();
       return Right(dispatches);
     } catch (e) {
@@ -360,9 +371,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
       final events = snapshot.docs
           .map((doc) => InventoryEventEntity.fromFirestore(
-        doc.id,
-        doc.data() as Map<String, dynamic>,
-      ))
+                doc.id,
+                doc.data() as Map<String, dynamic>,
+              ))
           .toList();
       return Right(events);
     } catch (e) {
@@ -384,9 +395,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
       final events = snapshot.docs
           .map((doc) => InventoryEventEntity.fromFirestore(
-        doc.id,
-        doc.data() as Map<String, dynamic>,
-      ))
+                doc.id,
+                doc.data() as Map<String, dynamic>,
+              ))
           .toList();
       return Right(events);
     } catch (e) {
@@ -405,9 +416,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
       final dispatches = snapshot.docs
           .map((doc) => DispatchEventEntity.fromFirestore(
-        doc.id,
-        doc.data() as Map<String, dynamic>,
-      ))
+                doc.id,
+                doc.data() as Map<String, dynamic>,
+              ))
           .toList();
       return Right(dispatches);
     } catch (e) {
@@ -420,7 +431,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
       String userId) async {
     try {
       final snapshot =
-      await _inventoryEvents.where('createdBy', isEqualTo: userId).get();
+          await _inventoryEvents.where('createdBy', isEqualTo: userId).get();
 
       final summary = <String, int>{};
       for (final doc in snapshot.docs) {
@@ -490,9 +501,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
       try {
         final events = snapshot.docs
             .map((doc) => InventoryEventEntity.fromFirestore(
-          doc.id,
-          doc.data() as Map<String, dynamic>,
-        ))
+                  doc.id,
+                  doc.data() as Map<String, dynamic>,
+                ))
             .toList();
         return Right<String, List<InventoryEventEntity>>(events);
       } catch (e) {
@@ -506,7 +517,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
   Future<Either<String, ItemEntity>> getItemByBarcode(String barcode) async {
     try {
       final snapshot =
-      await _items.where('barcode', isEqualTo: barcode).limit(1).get();
+          await _items.where('barcode', isEqualTo: barcode).limit(1).get();
 
       if (snapshot.docs.isEmpty) {
         return const Left('No item found for this barcode');
@@ -533,7 +544,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
       final items = snapshot.docs
           .map((doc) => ItemEntity.fromFirestore(
-          doc.id, doc.data() as Map<String, dynamic>))
+              doc.id, doc.data() as Map<String, dynamic>))
           .toList();
       return Right(items);
     } catch (e) {
@@ -563,16 +574,16 @@ class InventoryRepositoryImpl implements InventoryRepository {
           .toList();
 
       final eventsRefs =
-      (await _inventoryEvents.where('itemId', isEqualTo: itemId).get())
-          .docs
-          .map((d) => d.reference)
-          .toList();
+          (await _inventoryEvents.where('itemId', isEqualTo: itemId).get())
+              .docs
+              .map((d) => d.reference)
+              .toList();
 
       final dispatchRefs =
-      (await _dispatchEvents.where('itemId', isEqualTo: itemId).get())
-          .docs
-          .map((d) => d.reference)
-          .toList();
+          (await _dispatchEvents.where('itemId', isEqualTo: itemId).get())
+              .docs
+              .map((d) => d.reference)
+              .toList();
 
       await commitInBatches([
         ...lotsRefs,
@@ -594,6 +605,52 @@ class InventoryRepositoryImpl implements InventoryRepository {
       return Right(item);
     } catch (e) {
       return Left('Item update error: $e');
+    }
+  }
+
+  @override
+  Future<Either<String, Unit>> editStock({
+    required String itemId,
+    required String lotId,
+    required double unitPrice,
+    required double sellingPrice,
+    required int quantity,
+    double? discount,
+    String? notes,
+  }) async {
+    try {
+      final lotRef = _items.doc(itemId).collection('lots').doc(lotId);
+      final itemRef = _items.doc(itemId);
+      final lotDoc = await lotRef.get();
+      if (!lotDoc.exists) return const Left('Lot not found');
+
+      final currentLot = LotEntity.fromFirestore(
+          lotDoc.id, lotDoc.data() as Map<String, dynamic>);
+
+      final stockDiff = quantity - currentLot.quantityRemaining;
+
+      final batch = _firestore.batch();
+
+      batch.update(lotRef, {
+        'unitPrice': unitPrice,
+        'sellingPrice': sellingPrice,
+        'quantityRemaining': quantity,
+        'quantityReceived': currentLot.quantityReceived + stockDiff,
+        'status': quantity == 0 ? 'exhausted' : 'active',
+        if (discount != null && discount > 0) 'discount': discount,
+        if (discount == null || discount == 0) 'discount': FieldValue.delete(),
+        if (notes != null) 'notes': notes,
+      });
+      if (stockDiff != 0) {
+        batch.update(itemRef, {
+          'currentStock': FieldValue.increment(stockDiff),
+        });
+      }
+
+      await batch.commit();
+      return const Right(unit);
+    } catch (e) {
+      return Left('Edit stock error: $e');
     }
   }
 }
