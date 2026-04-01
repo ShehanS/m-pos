@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../repositories/inventory_repository.dart';
@@ -17,6 +19,7 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
     on<DispatchByItem>(_onDispatchByItem);
     on<DeleteItem>(_onDeleteItem);
     on<LoadItems>(_onLoadItems);
+    on<LoadNoneScanItemEvents>(_loadNoneScanItemEvents);
     on<LoadItemEvents>(_onLoadItemEvents);
     on<LoadActiveLots>(_onLoadActiveLots);
     on<ClearPendingDispatch>(_onClearPendingDispatch);
@@ -26,9 +29,9 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
   }
 
   Future<void> _onClearPendingDispatch(
-      ClearPendingDispatch event,
-      Emitter<InventoryState> emit,
-      ) async {
+    ClearPendingDispatch event,
+    Emitter<InventoryState> emit,
+  ) async {
     emit(state.copyWith(
       barcodeMatches: [],
       pendingDispatch: null,
@@ -37,32 +40,32 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
   }
 
   Future<void> _onStarted(
-      Started event,
-      Emitter<InventoryState> emit,
-      ) async {
+    Started event,
+    Emitter<InventoryState> emit,
+  ) async {
     add(const LoadItems());
   }
 
   Future<void> _onAddItem(
-      AddItem event,
-      Emitter<InventoryState> emit,
-      ) async {
+    AddItem event,
+    Emitter<InventoryState> emit,
+  ) async {
     emit(state.copyWith(status: InventoryStatus.loading));
     final result = await _inventoryRepository.addItem(event.item);
     await result.fold(
-          (error) async => emit(state.copyWith(
+      (error) async => emit(state.copyWith(
         status: InventoryStatus.error,
         errorMessage: error,
       )),
-          (item) async {
+      (item) async {
         final itemsResult = await _inventoryRepository.getAllItems();
         itemsResult.fold(
-              (error) => emit(state.copyWith(
+          (error) => emit(state.copyWith(
             status: InventoryStatus.loaded,
             items: [...state.items, item],
             lastOperation: 'Item added successfully',
           )),
-              (items) => emit(state.copyWith(
+          (items) => emit(state.copyWith(
             status: InventoryStatus.loaded,
             items: items,
             lastOperation: 'Item added successfully',
@@ -73,34 +76,33 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
   }
 
   Future<void> _onAddStock(
-      AddStock event,
-      Emitter<InventoryState> emit,
-      ) async {
+    AddStock event,
+    Emitter<InventoryState> emit,
+  ) async {
     emit(state.copyWith(status: InventoryStatus.loading));
     final result = await _inventoryRepository.addStock(
-      itemId: event.itemId,
-      poNumber: event.poNumber,
-      unitPrice: event.unitPrice,
-      quantity: event.quantity,
-      receivedDate: event.receivedDate,
-      createdBy: event.createdBy,
-      notes: event.notes,
-      sellingPrice: event.sellingPrice,
-      discount: event.discount
-    );
+        itemId: event.itemId,
+        poNumber: event.poNumber,
+        unitPrice: event.unitPrice,
+        quantity: event.quantity,
+        receivedDate: event.receivedDate,
+        createdBy: event.createdBy,
+        notes: event.notes,
+        sellingPrice: event.sellingPrice,
+        discount: event.discount);
     await result.fold(
-          (error) async => emit(state.copyWith(
+      (error) async => emit(state.copyWith(
         status: InventoryStatus.error,
         errorMessage: error,
       )),
-          (_) async {
+      (_) async {
         final itemsResult = await _inventoryRepository.getAllItems();
         itemsResult.fold(
-              (error) => emit(state.copyWith(
+          (error) => emit(state.copyWith(
             status: InventoryStatus.loaded,
             lastOperation: 'Stock added successfully',
           )),
-              (items) => emit(state.copyWith(
+          (items) => emit(state.copyWith(
             status: InventoryStatus.loaded,
             items: items,
             lastOperation: 'Stock added successfully',
@@ -111,9 +113,9 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
   }
 
   Future<void> _onEditStock(
-      EditStock event,
-      Emitter<InventoryState> emit,
-      ) async {
+    EditStock event,
+    Emitter<InventoryState> emit,
+  ) async {
     emit(state.copyWith(status: InventoryStatus.loading));
     final result = await _inventoryRepository.editStock(
       itemId: event.itemId,
@@ -125,18 +127,18 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
       notes: event.notes,
     );
     await result.fold(
-          (error) async => emit(state.copyWith(
+      (error) async => emit(state.copyWith(
         status: InventoryStatus.error,
         errorMessage: error,
       )),
-          (_) async {
+      (_) async {
         final itemsResult = await _inventoryRepository.getAllItems();
         itemsResult.fold(
-              (error) => emit(state.copyWith(
+          (error) => emit(state.copyWith(
             status: InventoryStatus.loaded,
             lastOperation: 'Stock updated successfully',
           )),
-              (items) => emit(state.copyWith(
+          (items) => emit(state.copyWith(
             status: InventoryStatus.loaded,
             items: items,
             lastOperation: 'Stock updated successfully',
@@ -147,9 +149,9 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
   }
 
   Future<void> _onDispatch(
-      Dispatch event,
-      Emitter<InventoryState> emit,
-      ) async {
+    Dispatch event,
+    Emitter<InventoryState> emit,
+  ) async {
     emit(state.copyWith(status: InventoryStatus.loading));
     final result = await _inventoryRepository.dispatch(
       itemId: event.itemId,
@@ -159,18 +161,18 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
       notes: event.notes,
     );
     await result.fold(
-          (error) async => emit(state.copyWith(
+      (error) async => emit(state.copyWith(
         status: InventoryStatus.error,
         errorMessage: error,
       )),
-          (_) async {
+      (_) async {
         final itemsResult = await _inventoryRepository.getAllItems();
         itemsResult.fold(
-              (error) => emit(state.copyWith(
+          (error) => emit(state.copyWith(
             status: InventoryStatus.loaded,
             lastOperation: 'Dispatched successfully',
           )),
-              (items) => emit(state.copyWith(
+          (items) => emit(state.copyWith(
             status: InventoryStatus.loaded,
             items: items,
             lastOperation: 'Dispatched successfully',
@@ -181,17 +183,17 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
   }
 
   Future<void> _onDispatchByBarcode(
-      DispatchByBarcode event,
-      Emitter<InventoryState> emit,
-      ) async {
+    DispatchByBarcode event,
+    Emitter<InventoryState> emit,
+  ) async {
     emit(state.copyWith(status: InventoryStatus.loading));
     final result = await _inventoryRepository.getItemsByBarcode(event.barcode);
     await result.fold(
-          (error) async => emit(state.copyWith(
+      (error) async => emit(state.copyWith(
         status: InventoryStatus.error,
         errorMessage: error,
       )),
-          (matches) async {
+      (matches) async {
         if (matches.length == 1) {
           final dispatchResult = await _inventoryRepository.dispatch(
             itemId: matches.first.itemId,
@@ -201,18 +203,18 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
             notes: event.notes,
           );
           await dispatchResult.fold(
-                (error) async => emit(state.copyWith(
+            (error) async => emit(state.copyWith(
               status: InventoryStatus.error,
               errorMessage: error,
             )),
-                (_) async {
+            (_) async {
               final itemsResult = await _inventoryRepository.getAllItems();
               itemsResult.fold(
-                    (error) => emit(state.copyWith(
+                (error) => emit(state.copyWith(
                   status: InventoryStatus.loaded,
                   lastOperation: 'Dispatched successfully',
                 )),
-                    (items) => emit(state.copyWith(
+                (items) => emit(state.copyWith(
                   status: InventoryStatus.loaded,
                   items: items,
                   barcodeMatches: [],
@@ -240,9 +242,9 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
   }
 
   Future<void> _onDispatchByItem(
-      DispatchByItem event,
-      Emitter<InventoryState> emit,
-      ) async {
+    DispatchByItem event,
+    Emitter<InventoryState> emit,
+  ) async {
     emit(state.copyWith(status: InventoryStatus.loading));
     final result = await _inventoryRepository.dispatch(
       itemId: event.itemId,
@@ -252,20 +254,20 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
       notes: event.notes,
     );
     await result.fold(
-          (error) async => emit(state.copyWith(
+      (error) async => emit(state.copyWith(
         status: InventoryStatus.error,
         errorMessage: error,
       )),
-          (_) async {
+      (_) async {
         final itemsResult = await _inventoryRepository.getAllItems();
         itemsResult.fold(
-              (error) => emit(state.copyWith(
+          (error) => emit(state.copyWith(
             status: InventoryStatus.loaded,
             barcodeMatches: [],
             pendingDispatch: null,
             lastOperation: 'Dispatched successfully',
           )),
-              (items) => emit(state.copyWith(
+          (items) => emit(state.copyWith(
             status: InventoryStatus.loaded,
             items: items,
             barcodeMatches: [],
@@ -278,27 +280,25 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
   }
 
   Future<void> _onDeleteItem(
-      DeleteItem event,
-      Emitter<InventoryState> emit,
-      ) async {
+    DeleteItem event,
+    Emitter<InventoryState> emit,
+  ) async {
     emit(state.copyWith(status: InventoryStatus.loading));
     final result = await _inventoryRepository.deleteItem(event.itemId);
     await result.fold(
-          (error) async => emit(state.copyWith(
+      (error) async => emit(state.copyWith(
         status: InventoryStatus.error,
         errorMessage: error,
       )),
-          (_) async {
+      (_) async {
         final itemsResult = await _inventoryRepository.getAllItems();
         itemsResult.fold(
-              (error) => emit(state.copyWith(
+          (error) => emit(state.copyWith(
             status: InventoryStatus.loaded,
-            items: state.items
-                .where((i) => i.itemId != event.itemId)
-                .toList(),
+            items: state.items.where((i) => i.itemId != event.itemId).toList(),
             lastOperation: 'Item deleted successfully',
           )),
-              (items) => emit(state.copyWith(
+          (items) => emit(state.copyWith(
             status: InventoryStatus.loaded,
             items: items,
             lastOperation: 'Item deleted successfully',
@@ -309,17 +309,17 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
   }
 
   Future<void> _onLoadItems(
-      LoadItems event,
-      Emitter<InventoryState> emit,
-      ) async {
+    LoadItems event,
+    Emitter<InventoryState> emit,
+  ) async {
     emit(state.copyWith(status: InventoryStatus.loading));
     final result = await _inventoryRepository.getAllItems();
     result.fold(
-          (error) => emit(state.copyWith(
+      (error) => emit(state.copyWith(
         status: InventoryStatus.error,
         errorMessage: error,
       )),
-          (items) => emit(state.copyWith(
+      (items) => emit(state.copyWith(
         status: InventoryStatus.loaded,
         items: items,
         lastOperation: null,
@@ -328,17 +328,17 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
   }
 
   Future<void> _onLoadItemEvents(
-      LoadItemEvents event,
-      Emitter<InventoryState> emit,
-      ) async {
+    LoadItemEvents event,
+    Emitter<InventoryState> emit,
+  ) async {
     emit(state.copyWith(status: InventoryStatus.loading));
     final result = await _inventoryRepository.getItemEvents(event.itemId);
     result.fold(
-          (error) => emit(state.copyWith(
+      (error) => emit(state.copyWith(
         status: InventoryStatus.error,
         errorMessage: error,
       )),
-          (events) => emit(state.copyWith(
+      (events) => emit(state.copyWith(
         status: InventoryStatus.loaded,
         events: events,
         lastOperation: null,
@@ -347,68 +347,67 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
   }
 
   Future<void> _onLoadActiveLots(
-      LoadActiveLots event,
-      Emitter<InventoryState> emit,
-      ) async {
+    LoadActiveLots event,
+    Emitter<InventoryState> emit,
+  ) async {
     emit(state.copyWith(status: InventoryStatus.loading));
     final result = await _inventoryRepository.getActiveLots(event.itemId);
     result.fold(
-          (error) => emit(state.copyWith(
+      (error) => emit(state.copyWith(
         status: InventoryStatus.error,
         errorMessage: error,
       )),
-          (lots) => emit(state.copyWith(
+      (lots) => emit(state.copyWith(
         status: InventoryStatus.loaded,
         activeLots: lots,
         lastOperation: null,
       )),
     );
   }
+
   Future<void> _onEditItem(
-      EditItem event,
-      Emitter<InventoryState> emit,
-      ) async {
+    EditItem event,
+    Emitter<InventoryState> emit,
+  ) async {
     emit(state.copyWith(status: InventoryStatus.loading));
     final result = await _inventoryRepository.updateItem(event.item);
     await result.fold(
-          (error) async =>
-          emit(state.copyWith(
-            status: InventoryStatus.error,
-            errorMessage: error,
-          )),
-          (_) async {
+      (error) async => emit(state.copyWith(
+        status: InventoryStatus.error,
+        errorMessage: error,
+      )),
+      (_) async {
         final itemsResult = await _inventoryRepository.getAllItems();
         itemsResult.fold(
-              (error) =>
-              emit(state.copyWith(
-                status: InventoryStatus.loaded,
-                items: state.items
-                    .map((i) => i.itemId == event.item.itemId ? event.item : i)
-                    .toList(),
-                lastOperation: 'Item updated successfully',
-              )),
-              (items) =>
-              emit(state.copyWith(
-                status: InventoryStatus.loaded,
-                items: items,
-                lastOperation: 'Item updated successfully',
-              )),
+          (error) => emit(state.copyWith(
+            status: InventoryStatus.loaded,
+            items: state.items
+                .map((i) => i.itemId == event.item.itemId ? event.item : i)
+                .toList(),
+            lastOperation: 'Item updated successfully',
+          )),
+          (items) => emit(state.copyWith(
+            status: InventoryStatus.loaded,
+            items: items,
+            lastOperation: 'Item updated successfully',
+          )),
         );
       },
     );
   }
+
   Future<void> _onScanItemForBill(
-      ScanItemForBill event,
-      Emitter<InventoryState> emit,
-      ) async {
+    ScanItemForBill event,
+    Emitter<InventoryState> emit,
+  ) async {
     emit(state.copyWith(status: InventoryStatus.loading));
     final result = await _inventoryRepository.getItemsByBarcode(event.barcode);
     result.fold(
-          (error) => emit(state.copyWith(
+      (error) => emit(state.copyWith(
         status: InventoryStatus.error,
         errorMessage: error,
       )),
-          (items) => emit(state.copyWith(
+      (items) => emit(state.copyWith(
         status: InventoryStatus.loaded,
         barcodeMatches: items,
         lastOperation: null,
@@ -417,20 +416,36 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
   }
 
   Future<void> _onLoadLotsForItem(
-      LoadLotsForItem event,
-      Emitter<InventoryState> emit,
-      ) async {
+    LoadLotsForItem event,
+    Emitter<InventoryState> emit,
+  ) async {
     emit(state.copyWith(status: InventoryStatus.loading));
     final result = await _inventoryRepository.getActiveLots(event.itemId);
     result.fold(
-          (error) => emit(state.copyWith(
+      (error) => emit(state.copyWith(
         status: InventoryStatus.error,
         errorMessage: error,
       )),
-          (lots) => emit(state.copyWith(
+      (lots) => emit(state.copyWith(
         status: InventoryStatus.loaded,
         scannedItemLots: lots,
         lastOperation: null,
+      )),
+    );
+  }
+
+  Future<void> _loadNoneScanItemEvents(
+      LoadNoneScanItemEvents event, Emitter<InventoryState> emit) async {
+    emit(state.copyWith(status: InventoryStatus.loading));
+    final result = await _inventoryRepository.getAllItemsByScanningFlag(false);
+    result.fold(
+      (error) => emit(state.copyWith(
+        status: InventoryStatus.error,
+        errorMessage: error,
+      )),
+      (items) => emit(state.copyWith(
+        status: InventoryStatus.loaded,
+        items: items
       )),
     );
   }

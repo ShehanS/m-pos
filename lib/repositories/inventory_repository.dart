@@ -13,6 +13,9 @@ abstract class InventoryRepository {
 
   Future<Either<String, List<ItemEntity>>> getAllItems();
 
+  Future<Either<String, List<ItemEntity>>> getAllItemsByScanningFlag(
+      bool isScanning);
+
   Future<Either<String, ItemEntity>> getItemByBarcode(String barcode);
 
   Future<Either<String, Unit>> addStock({
@@ -605,6 +608,28 @@ class InventoryRepositoryImpl implements InventoryRepository {
       return Right(item);
     } catch (e) {
       return Left('Item update error: $e');
+    }
+  }
+
+  @override
+  Future<Either<String, List<ItemEntity>>> getAllItemsByScanningFlag(
+      bool isScanning) async {
+    try {
+      final snapshot = await _items
+          .where('isScanning', isEqualTo: isScanning)
+          .orderBy('name')
+          .get();
+
+      final items = snapshot.docs
+          .map((doc) => ItemEntity.fromFirestore(
+                doc.id,
+                doc.data() as Map<String, dynamic>,
+              ))
+          .toList();
+
+      return Right(items);
+    } catch (e) {
+      return Left('Items fetch error: $e');
     }
   }
 

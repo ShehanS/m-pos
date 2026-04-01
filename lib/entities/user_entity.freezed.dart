@@ -34,6 +34,7 @@ mixin _$UserEntity {
   List<Business>? get business => throw _privateConstructorUsedError;
   DateTime? get createdAt => throw _privateConstructorUsedError;
   String? get fcmToken => throw _privateConstructorUsedError;
+  String? get activeBusiness => throw _privateConstructorUsedError;
 
   /// Serializes this UserEntity to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -65,7 +66,8 @@ abstract class $UserEntityCopyWith<$Res> {
       bool emailVerified,
       List<Business>? business,
       DateTime? createdAt,
-      String? fcmToken});
+      String? fcmToken,
+      String? activeBusiness});
 }
 
 /// @nodoc
@@ -97,6 +99,7 @@ class _$UserEntityCopyWithImpl<$Res, $Val extends UserEntity>
     Object? business = freezed,
     Object? createdAt = freezed,
     Object? fcmToken = freezed,
+    Object? activeBusiness = freezed,
   }) {
     return _then(_value.copyWith(
       uid: null == uid
@@ -155,6 +158,10 @@ class _$UserEntityCopyWithImpl<$Res, $Val extends UserEntity>
           ? _value.fcmToken
           : fcmToken // ignore: cast_nullable_to_non_nullable
               as String?,
+      activeBusiness: freezed == activeBusiness
+          ? _value.activeBusiness
+          : activeBusiness // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -181,7 +188,8 @@ abstract class _$$UserEntityImplCopyWith<$Res>
       bool emailVerified,
       List<Business>? business,
       DateTime? createdAt,
-      String? fcmToken});
+      String? fcmToken,
+      String? activeBusiness});
 }
 
 /// @nodoc
@@ -211,6 +219,7 @@ class __$$UserEntityImplCopyWithImpl<$Res>
     Object? business = freezed,
     Object? createdAt = freezed,
     Object? fcmToken = freezed,
+    Object? activeBusiness = freezed,
   }) {
     return _then(_$UserEntityImpl(
       uid: null == uid
@@ -269,6 +278,10 @@ class __$$UserEntityImplCopyWithImpl<$Res>
           ? _value.fcmToken
           : fcmToken // ignore: cast_nullable_to_non_nullable
               as String?,
+      activeBusiness: freezed == activeBusiness
+          ? _value.activeBusiness
+          : activeBusiness // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -290,7 +303,8 @@ class _$UserEntityImpl extends _UserEntity {
       this.emailVerified = false,
       final List<Business>? business,
       this.createdAt,
-      this.fcmToken})
+      this.fcmToken,
+      this.activeBusiness})
       : _business = business,
         super._();
 
@@ -335,10 +349,12 @@ class _$UserEntityImpl extends _UserEntity {
   final DateTime? createdAt;
   @override
   final String? fcmToken;
+  @override
+  final String? activeBusiness;
 
   @override
   String toString() {
-    return 'UserEntity(uid: $uid, email: $email, username: $username, displayName: $displayName, photoUrl: $photoUrl, firstName: $firstName, lastName: $lastName, contact: $contact, address: $address, isUpdateProfile: $isUpdateProfile, emailVerified: $emailVerified, business: $business, createdAt: $createdAt, fcmToken: $fcmToken)';
+    return 'UserEntity(uid: $uid, email: $email, username: $username, displayName: $displayName, photoUrl: $photoUrl, firstName: $firstName, lastName: $lastName, contact: $contact, address: $address, isUpdateProfile: $isUpdateProfile, emailVerified: $emailVerified, business: $business, createdAt: $createdAt, fcmToken: $fcmToken, activeBusiness: $activeBusiness)';
   }
 
   @override
@@ -368,7 +384,9 @@ class _$UserEntityImpl extends _UserEntity {
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.fcmToken, fcmToken) ||
-                other.fcmToken == fcmToken));
+                other.fcmToken == fcmToken) &&
+            (identical(other.activeBusiness, activeBusiness) ||
+                other.activeBusiness == activeBusiness));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -388,7 +406,8 @@ class _$UserEntityImpl extends _UserEntity {
       emailVerified,
       const DeepCollectionEquality().hash(_business),
       createdAt,
-      fcmToken);
+      fcmToken,
+      activeBusiness);
 
   /// Create a copy of UserEntity
   /// with the given fields replaced by the non-null parameter values.
@@ -421,7 +440,8 @@ abstract class _UserEntity extends UserEntity {
       final bool emailVerified,
       final List<Business>? business,
       final DateTime? createdAt,
-      final String? fcmToken}) = _$UserEntityImpl;
+      final String? fcmToken,
+      final String? activeBusiness}) = _$UserEntityImpl;
   const _UserEntity._() : super._();
 
   factory _UserEntity.fromJson(Map<String, dynamic> json) =
@@ -455,6 +475,8 @@ abstract class _UserEntity extends UserEntity {
   DateTime? get createdAt;
   @override
   String? get fcmToken;
+  @override
+  String? get activeBusiness;
 
   /// Create a copy of UserEntity
   /// with the given fields replaced by the non-null parameter values.

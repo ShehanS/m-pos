@@ -34,7 +34,6 @@ class InventoryEvent with _$InventoryEvent {
     String? notes,
   }) = EditStock;
 
-
   const factory InventoryEvent.dispatch({
     required String itemId,
     required int quantity,
@@ -52,10 +51,13 @@ class InventoryEvent with _$InventoryEvent {
   }) = DispatchByBarcode;
 
   const factory InventoryEvent.loadItems() = LoadItems;
+  const factory InventoryEvent.loadItemsWithFlag({required bool isScanning}) = LoadItemsWithFlag;
 
   const factory InventoryEvent.loadItemEvents({
     required String itemId,
   }) = LoadItemEvents;
+
+  const factory InventoryEvent.loadNoneScanItemEvents() = LoadNoneScanItemEvents;
 
   const factory InventoryEvent.loadActiveLots({
     required String itemId,
@@ -68,6 +70,7 @@ class InventoryEvent with _$InventoryEvent {
     String? dispatchedTo,
     String? notes,
   }) = DispatchByItem;
+
   const factory InventoryEvent.deleteItem({
     required String itemId,
   }) = DeleteItem;
@@ -77,6 +80,7 @@ class InventoryEvent with _$InventoryEvent {
   const factory InventoryEvent.editItem({
     required ItemEntity item,
   }) = EditItem;
+
   const factory InventoryEvent.scanItemForBill({
     required String barcode,
   }) = ScanItemForBill;

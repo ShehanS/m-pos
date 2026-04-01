@@ -18,11 +18,13 @@ class ItemEntity with _$ItemEntity {
     DateTime? createdAt,
     String? createdBy,
     String? variant,
+    @Default(true) bool ? isScanning,
   }) = _ItemEntity;
 
   factory ItemEntity.fromFirestore(String id, Map<String, dynamic> data) {
     return ItemEntity(
       itemId: id,
+      isScanning: data['isScanning'] as bool,
       name: data['name'] as String? ?? '',
       unit: data['unit'] as String? ?? '',
       category: data['category'] as String?,
@@ -45,6 +47,7 @@ class ItemEntity with _$ItemEntity {
       'name': name,
       'unit': unit,
       'currentStock': currentStock,
+      'isScanning': isScanning,
       if (variant != null) 'variant': variant,
       if (category != null) 'category': category,
       if (description != null) 'description': description,

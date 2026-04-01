@@ -127,8 +127,8 @@ class _StockInScreenState extends State<StockInScreen> {
           child: state.status == InventoryStatus.loading && items.isEmpty
               ? const Center(child: CircularProgressIndicator())
               : items.isEmpty
-              ? _buildEmptyState(context)
-              : _buildItemList(context, state),
+                  ? _buildEmptyState(context)
+                  : _buildItemList(context, state),
         ),
       ),
     );
@@ -140,18 +140,18 @@ class _StockInScreenState extends State<StockInScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.inventory_2_outlined,
-              size: 80, color: Colors.grey.withOpacity(0.5))
+                  size: 80, color: Colors.grey.withOpacity(0.5))
               .animate()
               .scale(begin: const Offset(0.8, 0.8), curve: Curves.easeOutBack)
               .fadeIn(),
           const SizedBox(height: 16),
           Text('No items yet',
-              style: Theme.of(context).textTheme.headlineMedium)
+                  style: Theme.of(context).textTheme.headlineMedium)
               .animate()
               .fadeIn(delay: 200.ms),
           const SizedBox(height: 8),
           Text('Add an item to get started',
-              style: Theme.of(context).textTheme.bodyMedium)
+                  style: Theme.of(context).textTheme.bodyMedium)
               .animate()
               .fadeIn(delay: 300.ms),
           const SizedBox(height: 24),
@@ -195,8 +195,8 @@ class _StockInScreenState extends State<StockInScreen> {
                   Expanded(
                     child: Text(
                       'Unit: ${item.unit}'
-                          '${item.variant != null ? ' • ${item.variant}' : ''}'
-                          '${item.category != null ? ' • ${item.category}' : ''}',
+                      '${item.variant != null ? ' • ${item.variant}' : ''}'
+                      '${item.category != null ? ' • ${item.category}' : ''}',
                       style: const TextStyle(fontSize: 12),
                     ),
                   ),
@@ -306,41 +306,42 @@ class _StockInScreenState extends State<StockInScreen> {
             body: state.status == InventoryStatus.loading
                 ? const Center(child: CircularProgressIndicator())
                 : state.activeLots.isEmpty
-                ? const Center(child: Text("No stock found."))
-                : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: state.activeLots.length,
-              itemBuilder: (ctx, index) {
-                final lot = state.activeLots[index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    title: Text('Batch: ${lot.poNumber ?? "N/A"}'),
-                    subtitle: Text(
-                      'Cost: ${lot.unitPrice.toStringAsFixed(2)} | Sell: ${lot.sellingPrice.toStringAsFixed(2)}\nDiscount: ${lot.discount?.toStringAsFixed(2) ?? "0.00"} | Stock: ${lot.quantityRemaining}',
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.edit_note_outlined,
-                          color: AppTheme.primaryColor),
-                      onPressed: () =>
-                          _showEditStockForm(context, item, lot),
-                    ),
-                  ),
-                );
-              },
-            ),
+                    ? const Center(child: Text("No stock found."))
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: state.activeLots.length,
+                        itemBuilder: (ctx, index) {
+                          final lot = state.activeLots[index];
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            child: ListTile(
+                              title: Text('Batch: ${lot.poNumber ?? "N/A"}'),
+                              subtitle: Text(
+                                'Cost: ${lot.unitPrice.toStringAsFixed(2)} | Sell: ${lot.sellingPrice.toStringAsFixed(2)}\nDiscount: ${lot.discount?.toStringAsFixed(2) ?? "0.00"} | Stock: ${lot.quantityRemaining}',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.edit_note_outlined,
+                                    color: AppTheme.primaryColor),
+                                onPressed: () =>
+                                    _showEditStockForm(context, item, lot),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
           );
         },
       ),
     );
   }
 
-  void _showEditStockForm(BuildContext context, ItemEntity item, LotEntity lot) {
+  void _showEditStockForm(
+      BuildContext context, ItemEntity item, LotEntity lot) {
     final unitPriceController =
-    TextEditingController(text: lot.unitPrice.toString());
+        TextEditingController(text: lot.unitPrice.toString());
     final sellingPriceController =
-    TextEditingController(text: lot.sellingPrice.toString());
+        TextEditingController(text: lot.sellingPrice.toString());
 
     DiscountType discountType = DiscountType.percentage;
 
@@ -354,7 +355,7 @@ class _StockInScreenState extends State<StockInScreen> {
         text: displayDiscount == 0 ? '0' : displayDiscount.toStringAsFixed(2));
 
     final qtyController =
-    TextEditingController(text: lot.quantityRemaining.toString());
+        TextEditingController(text: lot.quantityRemaining.toString());
     final notesController = TextEditingController(text: lot.notes ?? '');
     final formKey = GlobalKey<FormState>();
 
@@ -381,30 +382,31 @@ class _StockInScreenState extends State<StockInScreen> {
                 onPressed: () {
                   if (!formKey.currentState!.validate()) return;
                   final finalSellingPrice =
-                  double.parse(sellingPriceController.text.trim());
+                      double.parse(sellingPriceController.text.trim());
                   final finalDiscountInput =
                       double.tryParse(discountController.text.trim()) ?? 0;
 
                   final flatDiscountToSave =
-                  discountType == DiscountType.percentage
-                      ? finalSellingPrice * (finalDiscountInput / 100)
-                      : finalDiscountInput;
+                      discountType == DiscountType.percentage
+                          ? finalSellingPrice * (finalDiscountInput / 100)
+                          : finalDiscountInput;
 
                   context.read<InventoryBloc>().add(
-                    EditStock(
-                      itemId: item.itemId,
-                      lotId: lot.lotId,
-                      unitPrice:
-                      double.parse(unitPriceController.text.trim()),
-                      sellingPrice: finalSellingPrice,
-                      quantity: int.parse(qtyController.text.trim()),
-                      discount:
-                      flatDiscountToSave <= 0 ? 0.00 : flatDiscountToSave,
-                      notes: notesController.text.trim().isEmpty
-                          ? null
-                          : notesController.text.trim(),
-                    ),
-                  );
+                        EditStock(
+                          itemId: item.itemId,
+                          lotId: lot.lotId,
+                          unitPrice:
+                              double.parse(unitPriceController.text.trim()),
+                          sellingPrice: finalSellingPrice,
+                          quantity: int.parse(qtyController.text.trim()),
+                          discount: flatDiscountToSave <= 0
+                              ? 0.00
+                              : flatDiscountToSave,
+                          notes: notesController.text.trim().isEmpty
+                              ? null
+                              : notesController.text.trim(),
+                        ),
+                      );
                   Navigator.pop(ctx);
                   Navigator.pop(context);
                 },
@@ -422,9 +424,9 @@ class _StockInScreenState extends State<StockInScreen> {
                       label: 'Unit Price (Cost) *',
                       prefixIcon: Icons.attach_money_outlined,
                       keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                          const TextInputType.numberWithOptions(decimal: true),
                       validator: (v) =>
-                      v == null || v.isEmpty ? 'Required' : null,
+                          v == null || v.isEmpty ? 'Required' : null,
                     ),
                     const SizedBox(height: 16),
                     CustomTextField(
@@ -432,9 +434,9 @@ class _StockInScreenState extends State<StockInScreen> {
                       label: 'Selling Price *',
                       prefixIcon: Icons.sell_outlined,
                       keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                          const TextInputType.numberWithOptions(decimal: true),
                       validator: (v) =>
-                      v == null || v.isEmpty ? 'Required' : null,
+                          v == null || v.isEmpty ? 'Required' : null,
                       onEditingComplete: () => setDialogState(() {}),
                     ),
                     const SizedBox(height: 16),
@@ -463,8 +465,8 @@ class _StockInScreenState extends State<StockInScreen> {
                             Container(
                               decoration: BoxDecoration(
                                 border: Border.all(
-                                    color: AppTheme.primaryColor
-                                        .withOpacity(0.3)),
+                                    color:
+                                        AppTheme.primaryColor.withOpacity(0.3)),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
@@ -473,15 +475,15 @@ class _StockInScreenState extends State<StockInScreen> {
                                   _buildDiscountTypeBtn(
                                     label: 'Flat',
                                     selected: discountType == DiscountType.flat,
-                                    onTap: () => setDialogState(() =>
-                                    discountType = DiscountType.flat),
+                                    onTap: () => setDialogState(
+                                        () => discountType = DiscountType.flat),
                                   ),
                                   _buildDiscountTypeBtn(
                                     label: '%',
                                     selected:
-                                    discountType == DiscountType.percentage,
+                                        discountType == DiscountType.percentage,
                                     onTap: () => setDialogState(() =>
-                                    discountType = DiscountType.percentage),
+                                        discountType = DiscountType.percentage),
                                   ),
                                 ],
                               ),
@@ -551,7 +553,7 @@ class _StockInScreenState extends State<StockInScreen> {
                       prefixIcon: Icons.inventory_2_outlined,
                       keyboardType: TextInputType.number,
                       validator: (v) =>
-                      v == null || v.isEmpty ? 'Required' : null,
+                          v == null || v.isEmpty ? 'Required' : null,
                     ),
                     const SizedBox(height: 16),
                     CustomTextField(
@@ -585,9 +587,9 @@ class _StockInScreenState extends State<StockInScreen> {
         ),
         actions: actions
             .map((a) => Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: a,
-        ))
+                  padding: const EdgeInsets.only(right: 8),
+                  child: a,
+                ))
             .toList(),
       ),
       body: SafeArea(child: body),
@@ -601,6 +603,7 @@ class _StockInScreenState extends State<StockInScreen> {
     final categoryController = TextEditingController();
     final descController = TextEditingController();
     final barcodeController = TextEditingController();
+    bool isScanningEnabled = true;
     final formKey = GlobalKey<FormState>();
 
     _showFullScreen(
@@ -614,26 +617,27 @@ class _StockInScreenState extends State<StockInScreen> {
               onPressed: () {
                 if (!formKey.currentState!.validate()) return;
                 context.read<InventoryBloc>().add(
-                  InventoryEvent.addItem(
-                    item: ItemEntity(
-                      itemId: '',
-                      name: nameController.text.trim(),
-                      unit: unitController.text.trim(),
-                      variant: variantController.text.trim().isEmpty
-                          ? null
-                          : variantController.text.trim(),
-                      category: categoryController.text.trim().isEmpty
-                          ? null
-                          : categoryController.text.trim(),
-                      description: descController.text.trim().isEmpty
-                          ? null
-                          : descController.text.trim(),
-                      barcode: barcodeController.text.trim().isEmpty
-                          ? null
-                          : barcodeController.text.trim(),
-                    ),
-                  ),
-                );
+                      InventoryEvent.addItem(
+                        item: ItemEntity(
+                          itemId: '',
+                          name: nameController.text.trim(),
+                          unit: unitController.text.trim(),
+                          isScanning: isScanningEnabled,
+                          variant: variantController.text.trim().isEmpty
+                              ? null
+                              : variantController.text.trim(),
+                          category: categoryController.text.trim().isEmpty
+                              ? null
+                              : categoryController.text.trim(),
+                          description: descController.text.trim().isEmpty
+                              ? null
+                              : descController.text.trim(),
+                          barcode: barcodeController.text.trim().isEmpty
+                              ? null
+                              : barcodeController.text.trim(),
+                        ),
+                      ),
+                    );
                 Navigator.pop(ctx);
               },
               child: const Text('Save'),
@@ -650,7 +654,15 @@ class _StockInScreenState extends State<StockInScreen> {
                     label: 'Item Name *',
                     prefixIcon: Icons.inventory_2_outlined,
                     validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Required' : null,
+                        v == null || v.trim().isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  SwitchListTile(
+                    title: const Text("Enable Scanning"),
+                    subtitle: const Text("Allow this item to be scanned"),
+                    value: isScanningEnabled,
+                    onChanged: (val) =>
+                        setDialogState(() => isScanningEnabled = val),
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
@@ -664,7 +676,7 @@ class _StockInScreenState extends State<StockInScreen> {
                     label: 'Unit * (e.g. kg, pcs, L)',
                     prefixIcon: Icons.straighten_outlined,
                     validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Required' : null,
+                        v == null || v.trim().isEmpty ? 'Required' : null,
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
@@ -682,7 +694,7 @@ class _StockInScreenState extends State<StockInScreen> {
                   const SizedBox(height: 16),
                   CustomTextField(
                     controller: barcodeController,
-                    label: 'Barcode / QR (optional)',
+                    label: 'Barcode / QR (optional) / ID',
                     prefixIcon: Icons.qr_code_outlined,
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.qr_code_scanner),
@@ -705,6 +717,7 @@ class _StockInScreenState extends State<StockInScreen> {
                             category: categoryController.text,
                             desc: descController.text,
                             barcode: scanned ?? barcodeController.text,
+                            isScanning: isScanningEnabled,
                           );
                         }
                       },
@@ -719,6 +732,7 @@ class _StockInScreenState extends State<StockInScreen> {
     );
   }
 
+
   void _showEditItemDialog(BuildContext context, ItemEntity item) {
     final nameController = TextEditingController(text: item.name);
     final unitController = TextEditingController(text: item.unit);
@@ -726,6 +740,7 @@ class _StockInScreenState extends State<StockInScreen> {
     final categoryController = TextEditingController(text: item.category ?? '');
     final descController = TextEditingController(text: item.description ?? '');
     final barcodeController = TextEditingController(text: item.barcode ?? '');
+    bool isScanningEnabled = item.isScanning ?? true;
     final formKey = GlobalKey<FormState>();
 
     _showFullScreen(
@@ -739,25 +754,26 @@ class _StockInScreenState extends State<StockInScreen> {
               onPressed: () {
                 if (!formKey.currentState!.validate()) return;
                 context.read<InventoryBloc>().add(
-                  InventoryEvent.editItem(
-                    item: item.copyWith(
-                      name: nameController.text.trim(),
-                      unit: unitController.text.trim(),
-                      variant: variantController.text.trim().isEmpty
-                          ? null
-                          : variantController.text.trim(),
-                      category: categoryController.text.trim().isEmpty
-                          ? null
-                          : categoryController.text.trim(),
-                      description: descController.text.trim().isEmpty
-                          ? null
-                          : descController.text.trim(),
-                      barcode: barcodeController.text.trim().isEmpty
-                          ? null
-                          : barcodeController.text.trim(),
-                    ),
-                  ),
-                );
+                      InventoryEvent.editItem(
+                        item: item.copyWith(
+                          name: nameController.text.trim(),
+                          unit: unitController.text.trim(),
+                          isScanning: isScanningEnabled,
+                          variant: variantController.text.trim().isEmpty
+                              ? null
+                              : variantController.text.trim(),
+                          category: categoryController.text.trim().isEmpty
+                              ? null
+                              : categoryController.text.trim(),
+                          description: descController.text.trim().isEmpty
+                              ? null
+                              : descController.text.trim(),
+                          barcode: barcodeController.text.trim().isEmpty
+                              ? null
+                              : barcodeController.text.trim(),
+                        ),
+                      ),
+                    );
                 Navigator.pop(ctx);
               },
               child: const Text('Update'),
@@ -774,7 +790,15 @@ class _StockInScreenState extends State<StockInScreen> {
                     label: 'Item Name *',
                     prefixIcon: Icons.inventory_2_outlined,
                     validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Required' : null,
+                        v == null || v.trim().isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  SwitchListTile(
+                    title: const Text("Enable Scanning"),
+                    subtitle: const Text("Allow this item to be scanned"),
+                    value: isScanningEnabled,
+                    onChanged: (val) =>
+                        setDialogState(() => isScanningEnabled = val),
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
@@ -788,7 +812,7 @@ class _StockInScreenState extends State<StockInScreen> {
                     label: 'Unit * (e.g. kg, pcs, L)',
                     prefixIcon: Icons.straighten_outlined,
                     validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Required' : null,
+                        v == null || v.trim().isEmpty ? 'Required' : null,
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
@@ -837,27 +861,27 @@ class _StockInScreenState extends State<StockInScreen> {
     );
   }
 
-  void _showAddItemDialogPrefilled(
-      BuildContext context, {
-        String name = '',
-        String variant = '',
-        String unit = '',
-        String category = '',
-        String desc = '',
-        String barcode = '',
-      }) {
+  void _showAddItemDialogPrefilled(BuildContext context,
+      {String name = '',
+      String variant = '',
+      String unit = '',
+      String category = '',
+      String desc = '',
+      String barcode = '',
+      required bool isScanning}) {
     final nameController = TextEditingController(text: name);
     final variantController = TextEditingController(text: variant);
     final unitController = TextEditingController(text: unit);
     final categoryController = TextEditingController(text: category);
     final descController = TextEditingController(text: desc);
     final barcodeController = TextEditingController(text: barcode);
+    bool isScanningEnabled = isScanning;
     final formKey = GlobalKey<FormState>();
 
     _showFullScreen(
       context: context,
       child: StatefulBuilder(
-        builder: (ctx, _) => _buildFormScaffold(
+        builder: (ctx, setDialogState) => _buildFormScaffold(
           title: 'Add New Item',
           dialogContext: ctx,
           actions: [
@@ -865,26 +889,27 @@ class _StockInScreenState extends State<StockInScreen> {
               onPressed: () {
                 if (!formKey.currentState!.validate()) return;
                 context.read<InventoryBloc>().add(
-                  InventoryEvent.addItem(
-                    item: ItemEntity(
-                      itemId: '',
-                      name: nameController.text.trim(),
-                      unit: unitController.text.trim(),
-                      variant: variantController.text.trim().isEmpty
-                          ? null
-                          : variantController.text.trim(),
-                      category: categoryController.text.trim().isEmpty
-                          ? null
-                          : categoryController.text.trim(),
-                      description: descController.text.trim().isEmpty
-                          ? null
-                          : descController.text.trim(),
-                      barcode: barcodeController.text.trim().isEmpty
-                          ? null
-                          : barcodeController.text.trim(),
-                    ),
-                  ),
-                );
+                      InventoryEvent.addItem(
+                        item: ItemEntity(
+                          itemId: '',
+                          name: nameController.text.trim(),
+                          unit: unitController.text.trim(),
+                          isScanning: isScanningEnabled,
+                          variant: variantController.text.trim().isEmpty
+                              ? null
+                              : variantController.text.trim(),
+                          category: categoryController.text.trim().isEmpty
+                              ? null
+                              : categoryController.text.trim(),
+                          description: descController.text.trim().isEmpty
+                              ? null
+                              : descController.text.trim(),
+                          barcode: barcodeController.text.trim().isEmpty
+                              ? null
+                              : barcodeController.text.trim(),
+                        ),
+                      ),
+                    );
                 Navigator.pop(ctx);
               },
               child: const Text('Save'),
@@ -901,7 +926,15 @@ class _StockInScreenState extends State<StockInScreen> {
                     label: 'Item Name *',
                     prefixIcon: Icons.inventory_2_outlined,
                     validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Required' : null,
+                        v == null || v.trim().isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  SwitchListTile(
+                    title: const Text("Enable Scanning"),
+                    subtitle: const Text("Allow this item to be scanned"),
+                    value: isScanningEnabled,
+                    onChanged: (val) =>
+                        setDialogState(() => isScanningEnabled = val),
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
@@ -915,7 +948,7 @@ class _StockInScreenState extends State<StockInScreen> {
                     label: 'Unit * (e.g. kg, pcs, L)',
                     prefixIcon: Icons.straighten_outlined,
                     validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Required' : null,
+                        v == null || v.trim().isEmpty ? 'Required' : null,
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
@@ -956,7 +989,7 @@ class _StockInScreenState extends State<StockInScreen> {
     final qtyController = TextEditingController();
     final notesController = TextEditingController();
     final dateController =
-    TextEditingController(text: DateFormat.yMMMd().format(DateTime.now()));
+        TextEditingController(text: DateFormat.yMMMd().format(DateTime.now()));
     final formKey = GlobalKey<FormState>();
     final items = context.read<InventoryBloc>().state.items;
     final user = context.read<AuthBloc>().state.user;
@@ -985,31 +1018,32 @@ class _StockInScreenState extends State<StockInScreen> {
                 onPressed: () {
                   if (!formKey.currentState!.validate()) return;
                   final finalSellingPrice =
-                  double.parse(sellingPriceController.text.trim());
+                      double.parse(sellingPriceController.text.trim());
                   final finalDiscountValue =
                       double.tryParse(discountController.text.trim()) ?? 0;
                   final flatDiscountToSave =
-                  discountType == DiscountType.percentage
-                      ? finalSellingPrice * (finalDiscountValue / 100)
-                      : finalDiscountValue;
+                      discountType == DiscountType.percentage
+                          ? finalSellingPrice * (finalDiscountValue / 100)
+                          : finalDiscountValue;
 
                   context.read<InventoryBloc>().add(
-                    AddStock(
-                      itemId: selectedItemId!,
-                      poNumber: poController.text.trim(),
-                      unitPrice:
-                      double.parse(unitPriceController.text.trim()),
-                      sellingPrice: finalSellingPrice,
-                      quantity: int.parse(qtyController.text.trim()),
-                      receivedDate: selectedDate,
-                      createdBy: user?.uid ?? '',
-                      discount:
-                      flatDiscountToSave <= 0 ? 0.00 : flatDiscountToSave,
-                      notes: notesController.text.trim().isEmpty
-                          ? null
-                          : notesController.text.trim(),
-                    ),
-                  );
+                        AddStock(
+                          itemId: selectedItemId!,
+                          poNumber: poController.text.trim(),
+                          unitPrice:
+                              double.parse(unitPriceController.text.trim()),
+                          sellingPrice: finalSellingPrice,
+                          quantity: int.parse(qtyController.text.trim()),
+                          receivedDate: selectedDate,
+                          createdBy: user?.uid ?? '',
+                          discount: flatDiscountToSave <= 0
+                              ? 0.00
+                              : flatDiscountToSave,
+                          notes: notesController.text.trim().isEmpty
+                              ? null
+                              : notesController.text.trim(),
+                        ),
+                      );
                   Navigator.pop(ctx);
                 },
                 child: const Text('Save'),
@@ -1027,18 +1061,18 @@ class _StockInScreenState extends State<StockInScreen> {
                       prefixIcon: Icons.inventory_2_outlined,
                       items: items
                           .map((item) => DropdownMenuItem(
-                        value: item.itemId,
-                        child: Text(
-                          item.variant != null
-                              ? '${item.name} — ${item.variant}'
-                              : item.name,
-                        ),
-                      ))
+                                value: item.itemId,
+                                child: Text(
+                                  item.variant != null
+                                      ? '${item.name} — ${item.variant}'
+                                      : item.name,
+                                ),
+                              ))
                           .toList(),
                       onChanged: (val) =>
                           setDialogState(() => selectedItemId = val),
                       validator: (v) =>
-                      v == null ? 'Please select an item' : null,
+                          v == null ? 'Please select an item' : null,
                     ),
                     const SizedBox(height: 16),
                     CustomTextField(
@@ -1052,7 +1086,7 @@ class _StockInScreenState extends State<StockInScreen> {
                       label: 'Unit Price (Cost) *',
                       prefixIcon: Icons.attach_money_outlined,
                       keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                          const TextInputType.numberWithOptions(decimal: true),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return 'Required';
                         if (double.tryParse(v) == null) return 'Invalid price';
@@ -1065,7 +1099,7 @@ class _StockInScreenState extends State<StockInScreen> {
                       label: 'Selling Price *',
                       prefixIcon: Icons.sell_outlined,
                       keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                          const TextInputType.numberWithOptions(decimal: true),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return 'Required';
                         if (double.tryParse(v) == null) return 'Invalid price';
@@ -1095,14 +1129,14 @@ class _StockInScreenState extends State<StockInScreen> {
                             const Text(
                               'Type',
                               style:
-                              TextStyle(fontSize: 11, color: Colors.grey),
+                                  TextStyle(fontSize: 11, color: Colors.grey),
                             ),
                             const SizedBox(height: 4),
                             Container(
                               decoration: BoxDecoration(
                                 border: Border.all(
                                     color:
-                                    AppTheme.primaryColor.withOpacity(0.3)),
+                                        AppTheme.primaryColor.withOpacity(0.3)),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
@@ -1112,14 +1146,14 @@ class _StockInScreenState extends State<StockInScreen> {
                                     label: 'Flat',
                                     selected: discountType == DiscountType.flat,
                                     onTap: () => setDialogState(
-                                            () => discountType = DiscountType.flat),
+                                        () => discountType = DiscountType.flat),
                                   ),
                                   _buildDiscountTypeBtn(
                                     label: '%',
                                     selected:
-                                    discountType == DiscountType.percentage,
+                                        discountType == DiscountType.percentage,
                                     onTap: () => setDialogState(() =>
-                                    discountType = DiscountType.percentage),
+                                        discountType = DiscountType.percentage),
                                   ),
                                 ],
                               ),
@@ -1226,7 +1260,7 @@ class _StockInScreenState extends State<StockInScreen> {
                           prefixIcon: Icons.calendar_today_outlined,
                           suffixIcon: const Icon(Icons.arrow_drop_down),
                           validator: (v) =>
-                          v == null || v.trim().isEmpty ? 'Required' : null,
+                              v == null || v.trim().isEmpty ? 'Required' : null,
                         ),
                       ),
                     ),
@@ -1301,19 +1335,19 @@ class _StockInScreenState extends State<StockInScreen> {
                 );
                 if (scanned != null && scanned.isNotEmpty && context.mounted) {
                   context.read<InventoryBloc>().add(
-                    DispatchByBarcode(
-                      barcode: scanned,
-                      quantity: int.parse(qtyController.text.trim()),
-                      createdBy: user?.uid ?? '',
-                      dispatchedTo:
-                      dispatchedToController.text.trim().isEmpty
-                          ? null
-                          : dispatchedToController.text.trim(),
-                      notes: notesController.text.trim().isEmpty
-                          ? null
-                          : notesController.text.trim(),
-                    ),
-                  );
+                        DispatchByBarcode(
+                          barcode: scanned,
+                          quantity: int.parse(qtyController.text.trim()),
+                          createdBy: user?.uid ?? '',
+                          dispatchedTo:
+                              dispatchedToController.text.trim().isEmpty
+                                  ? null
+                                  : dispatchedToController.text.trim(),
+                          notes: notesController.text.trim().isEmpty
+                              ? null
+                              : notesController.text.trim(),
+                        ),
+                      );
                 }
               },
             ),
@@ -1341,7 +1375,7 @@ class _StockInScreenState extends State<StockInScreen> {
                           child: Text(
                             'Scan barcode then confirm the quantity to dispatch.',
                             style:
-                            TextStyle(fontSize: 13, color: Colors.orange),
+                                TextStyle(fontSize: 13, color: Colors.orange),
                           ),
                         ),
                       ],
@@ -1385,10 +1419,10 @@ class _StockInScreenState extends State<StockInScreen> {
   }
 
   Future<void> _showVariantPickerDialog(
-      BuildContext context, {
-        required List<ItemEntity> matches,
-        required PendingDispatch pending,
-      }) {
+    BuildContext context, {
+    required List<ItemEntity> matches,
+    required PendingDispatch pending,
+  }) {
     return _showFullScreen<void>(
       context: context,
       child: Scaffold(
@@ -1413,7 +1447,7 @@ class _StockInScreenState extends State<StockInScreen> {
                   color: AppTheme.primaryColor.withOpacity(0.06),
                   borderRadius: BorderRadius.circular(12),
                   border:
-                  Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                      Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
                 ),
                 child: Row(
                   children: [
@@ -1436,61 +1470,61 @@ class _StockInScreenState extends State<StockInScreen> {
                   children: matches
                       .map(
                         (item) => Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        leading: CircleAvatar(
-                          backgroundColor:
-                          AppTheme.primaryColor.withOpacity(0.1),
-                          child: Text(
-                            item.name.substring(0, 1).toUpperCase(),
-                            style: const TextStyle(
-                              color: AppTheme.primaryColor,
-                              fontWeight: FontWeight.bold,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            leading: CircleAvatar(
+                              backgroundColor:
+                                  AppTheme.primaryColor.withOpacity(0.1),
+                              child: Text(
+                                item.name.substring(0, 1).toUpperCase(),
+                                style: const TextStyle(
+                                  color: AppTheme.primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
+                            title: Text(
+                              item.variant != null
+                                  ? '${item.name} — ${item.variant}'
+                                  : item.name,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                            subtitle: Text(
+                              'Stock: ${item.currentStock} ${item.unit}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: item.currentStock >= pending.quantity
+                                    ? Colors.green
+                                    : Colors.red,
+                              ),
+                            ),
+                            trailing: item.currentStock >= pending.quantity
+                                ? const Icon(Icons.check_circle_outline,
+                                    color: Colors.green)
+                                : const Icon(Icons.warning_amber_outlined,
+                                    color: Colors.orange),
+                            onTap: item.currentStock < pending.quantity
+                                ? null
+                                : () {
+                                    Navigator.pop(context);
+                                    context.read<InventoryBloc>().add(
+                                          DispatchByItem(
+                                            itemId: item.itemId,
+                                            quantity: pending.quantity,
+                                            createdBy: pending.createdBy,
+                                            dispatchedTo: pending.dispatchedTo,
+                                            notes: pending.notes,
+                                          ),
+                                        );
+                                  },
                           ),
                         ),
-                        title: Text(
-                          item.variant != null
-                              ? '${item.name} — ${item.variant}'
-                              : item.name,
-                          style:
-                          const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        subtitle: Text(
-                          'Stock: ${item.currentStock} ${item.unit}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: item.currentStock >= pending.quantity
-                                ? Colors.green
-                                : Colors.red,
-                          ),
-                        ),
-                        trailing: item.currentStock >= pending.quantity
-                            ? const Icon(Icons.check_circle_outline,
-                            color: Colors.green)
-                            : const Icon(Icons.warning_amber_outlined,
-                            color: Colors.orange),
-                        onTap: item.currentStock < pending.quantity
-                            ? null
-                            : () {
-                          Navigator.pop(context);
-                          context.read<InventoryBloc>().add(
-                            DispatchByItem(
-                              itemId: item.itemId,
-                              quantity: pending.quantity,
-                              createdBy: pending.createdBy,
-                              dispatchedTo: pending.dispatchedTo,
-                              notes: pending.notes,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  )
+                      )
                       .toList(),
                 ),
               ),

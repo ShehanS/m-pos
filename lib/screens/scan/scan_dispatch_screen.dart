@@ -82,14 +82,15 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
       BuildContext context, ItemEntity item, List<LotEntity> lots) {
     setState(() {
       final existingIndex =
-      _billItems.indexWhere((b) => b.item.itemId == item.itemId);
+          _billItems.indexWhere((b) => b.item.itemId == item.itemId);
       if (existingIndex >= 0) {
         _billItems[existingIndex].quantity += 1;
       } else {
         final defaultLot = lots.isNotEmpty ? lots.first : null;
         double displayDisc = 0;
         if (defaultLot != null && defaultLot.sellingPrice > 0) {
-          displayDisc = ((defaultLot.discount ?? 0) / defaultLot.sellingPrice) * 100;
+          displayDisc =
+              ((defaultLot.discount ?? 0) / defaultLot.sellingPrice) * 100;
         }
         _billItems.add(BillItem(
           item: item,
@@ -126,7 +127,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
   Widget build(BuildContext context) {
     final user = context.watch<UserBloc>().state.user;
     _selectedBusiness = user?.business?.firstWhere(
-            (b) => b.businessName == user.activeBusiness,
+        (b) => b.businessName == user.activeBusiness,
         orElse: () => user.business!.first);
     return Scaffold(
       appBar: AppBar(
@@ -174,23 +175,40 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: SizedBox(
-          width: double.infinity,
-          child: FloatingActionButton.extended(
-            onPressed: _isScanning || _selectedBusiness == null
-                ? null
-                : () => _startScan(context),
-            icon: _isScanning
-                ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                    strokeWidth: 2, color: Colors.white))
-                : const Icon(Icons.qr_code_scanner, color: Colors.white),
-            label: Text(_isScanning ? 'Scanning...' : 'Scan Item', style: const TextStyle(color: Colors.white)),
-            backgroundColor: _isScanning ? Colors.grey : Colors.deepPurpleAccent,
-          ),
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            FloatingActionButton(
+              heroTag: 'userBtn',
+              onPressed: () => _showClientDetailDialog(context),
+              backgroundColor: Colors.deepPurpleAccent,
+              child: const Icon(Icons.person, color: Colors.white),
+            ),
+            const SizedBox(width: 20),
+            FloatingActionButton(
+              heroTag: 'noneScanBtn',
+              onPressed: () => _showNoneScanListDialog(context),
+              backgroundColor: Colors.deepPurpleAccent,
+              child: const Icon(Icons.view_list_outlined, color: Colors.white),
+            ),
+            const SizedBox(width: 20),
+            FloatingActionButton(
+              heroTag: 'scanBtn',
+              onPressed: _isScanning || _selectedBusiness == null
+                  ? null
+                  : () => _startScan(context),
+              backgroundColor:
+                  _isScanning ? Colors.grey : Colors.deepPurpleAccent,
+              child: _isScanning
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.qr_code_scanner, color: Colors.white),
+            )
+          ],
         ),
       ),
       body: BlocListener<InventoryBloc, InventoryState>(
@@ -216,8 +234,8 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (!mounted) return;
                 context.read<InventoryBloc>().add(
-                  LoadLotsForItem(itemId: _pendingItem!.itemId),
-                );
+                      LoadLotsForItem(itemId: _pendingItem!.itemId),
+                    );
               });
             } else {
               _pendingMatches = state.barcodeMatches;
@@ -241,19 +259,29 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
               state.scannedItemLots.isNotEmpty &&
               _itemDetailShowing &&
               _pendingItem != null) {
-            _pendingLots = state.scannedItemLots;
             final item = _pendingItem!;
-            final lots = _pendingLots;
+            final lots = state.scannedItemLots;
 
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (!mounted) return;
 
-              // AUTO ADD ALWAYS - Bypasses popup detail sheet for continuous scanning
-              _autoAddToBill(context, item, lots);
-              _itemDetailShowing = false;
-              _pendingItem = null;
-              context.read<InventoryBloc>().add(const ClearPendingDispatch());
-              _continueScan(context);
+              if (item.isScanning == false) {
+                _showItemDetailSheet(context, item, lots).then((_) {
+                  setState(() {
+                    _itemDetailShowing = false;
+                    _pendingItem = null;
+                  });
+                  context
+                      .read<InventoryBloc>()
+                      .add(const ClearPendingDispatch());
+                });
+              } else {
+                _autoAddToBill(context, item, lots);
+                _itemDetailShowing = false;
+                _pendingItem = null;
+                context.read<InventoryBloc>().add(const ClearPendingDispatch());
+                _continueScan(context);
+              }
             });
           }
 
@@ -274,18 +302,18 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.receipt_long_outlined,
-              size: 80, color: Colors.grey.withOpacity(0.4))
+                  size: 80, color: Colors.grey.withOpacity(0.4))
               .animate()
               .scale(begin: const Offset(0.8, 0.8), curve: Curves.easeOutBack)
               .fadeIn(),
           const SizedBox(height: 16),
           Text('No items scanned yet',
-              style: Theme.of(context).textTheme.headlineMedium)
+                  style: Theme.of(context).textTheme.headlineMedium)
               .animate()
               .fadeIn(delay: 200.ms),
           const SizedBox(height: 8),
           Text('Tap "Scan Item" to start',
-              style: Theme.of(context).textTheme.bodyMedium)
+                  style: Theme.of(context).textTheme.bodyMedium)
               .animate()
               .fadeIn(delay: 300.ms),
         ],
@@ -315,7 +343,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                         children: [
                           CircleAvatar(
                             backgroundColor:
-                            AppTheme.primaryColor.withOpacity(0.1),
+                                AppTheme.primaryColor.withOpacity(0.1),
                             child: Text(
                               b.item.name.substring(0, 1).toUpperCase(),
                               style: const TextStyle(
@@ -379,7 +407,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                           color: Colors.grey.withOpacity(0.05),
                           borderRadius: BorderRadius.circular(8),
                           border:
-                          Border.all(color: Colors.grey.withOpacity(0.1)),
+                              Border.all(color: Colors.grey.withOpacity(0.1)),
                         ),
                         child: Column(
                           children: [
@@ -399,7 +427,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                               const SizedBox(height: 4),
                               Row(
                                 mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     b.discountType == DiscountType.percentage
@@ -497,7 +525,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
               Text(
                 _subtotalBeforeDiscount.toStringAsFixed(2),
                 style:
-                const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                    const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
               ),
             ],
           ),
@@ -584,52 +612,52 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: matches
                     .map((item) => Card(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor:
-                      AppTheme.primaryColor.withOpacity(0.1),
-                      child: Text(
-                        item.name.substring(0, 1).toUpperCase(),
-                        style: const TextStyle(
-                            color: AppTheme.primaryColor,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    title: Text(
-                      item.variant != null
-                          ? '${item.name} — ${item.variant}'
-                          : item.name,
-                      style:
-                      const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    subtitle: Text(
-                      'Stock: ${item.currentStock} ${item.unit}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: item.currentStock > 0
-                            ? Colors.green
-                            : Colors.red,
-                      ),
-                    ),
-                    trailing: item.currentStock > 0
-                        ? const Icon(Icons.arrow_forward_ios, size: 16)
-                        : const Icon(Icons.warning_amber_outlined,
-                        color: Colors.orange),
-                    onTap: item.currentStock <= 0
-                        ? null
-                        : () {
-                      Navigator.pop(ctx);
-                      _pendingItem = item;
-                      _itemDetailShowing = true;
-                      context.read<InventoryBloc>().add(
-                        LoadLotsForItem(itemId: item.itemId),
-                      );
-                    },
-                  ),
-                ))
+                          margin: const EdgeInsets.only(bottom: 10),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor:
+                                  AppTheme.primaryColor.withOpacity(0.1),
+                              child: Text(
+                                item.name.substring(0, 1).toUpperCase(),
+                                style: const TextStyle(
+                                    color: AppTheme.primaryColor,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            title: Text(
+                              item.variant != null
+                                  ? '${item.name} — ${item.variant}'
+                                  : item.name,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                            subtitle: Text(
+                              'Stock: ${item.currentStock} ${item.unit}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: item.currentStock > 0
+                                    ? Colors.green
+                                    : Colors.red,
+                              ),
+                            ),
+                            trailing: item.currentStock > 0
+                                ? const Icon(Icons.arrow_forward_ios, size: 16)
+                                : const Icon(Icons.warning_amber_outlined,
+                                    color: Colors.orange),
+                            onTap: item.currentStock <= 0
+                                ? null
+                                : () {
+                                    Navigator.pop(ctx);
+                                    _pendingItem = item;
+                                    _itemDetailShowing = true;
+                                    context.read<InventoryBloc>().add(
+                                          LoadLotsForItem(itemId: item.itemId),
+                                        );
+                                  },
+                          ),
+                        ))
                     .toList(),
               ),
             ),
@@ -640,11 +668,20 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
   }
 
   Future<void> _showItemDetailSheet(
-      BuildContext context,
-      ItemEntity item,
-      List<LotEntity> lots,
-      ) {
+    BuildContext context,
+    ItemEntity item,
+    List<LotEntity> lots,
+  ) {
     final defaultLot = lots.isNotEmpty ? lots.first : null;
+
+    final String baseUnit = item.unit.toLowerCase().trim();
+    final bool isWeight = baseUnit == 'kg';
+    final bool isLiquid =
+        baseUnit == 'l' || baseUnit == 'ltr' || baseUnit == 'liter';
+    final bool isConvertible = isWeight || isLiquid;
+
+    final String subUnit = isWeight ? 'g' : 'ml';
+    bool useSubUnit = false;
 
     final sellingPriceController = TextEditingController(
       text: defaultLot?.sellingPrice.toStringAsFixed(2) ?? '',
@@ -652,7 +689,8 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
 
     double displayDisc = 0;
     if (defaultLot != null && defaultLot.sellingPrice > 0) {
-      displayDisc = ((defaultLot.discount ?? 0) / defaultLot.sellingPrice) * 100;
+      displayDisc =
+          ((defaultLot.discount ?? 0) / defaultLot.sellingPrice) * 100;
     }
 
     final discountController = TextEditingController(
@@ -664,7 +702,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
 
     double sellingPrice = defaultLot?.sellingPrice ?? 0;
     double discount = displayDisc;
-    int qty = 1;
+    double qty = 1.0;
     DiscountType discountType = DiscountType.percentage;
     LotEntity? selectedLot = defaultLot;
 
@@ -677,7 +715,9 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheetState) {
-          double subtotal = qty * sellingPrice;
+          double effectivePricePerUnit =
+              useSubUnit ? (sellingPrice / 1000) : sellingPrice;
+          double subtotal = qty * effectivePricePerUnit;
           double discountAmount = discountType == DiscountType.percentage
               ? subtotal * (discount / 100)
               : discount;
@@ -685,7 +725,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
 
           return Padding(
             padding:
-            EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+                EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
             child: DraggableScrollableSheet(
               expand: false,
               initialChildSize: 0.85,
@@ -713,7 +753,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                         CircleAvatar(
                           radius: 24,
                           backgroundColor:
-                          AppTheme.primaryColor.withOpacity(0.1),
+                              AppTheme.primaryColor.withOpacity(0.1),
                           child: Text(
                             item.name.substring(0, 1).toUpperCase(),
                             style: const TextStyle(
@@ -736,7 +776,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                                     fontSize: 17, fontWeight: FontWeight.bold),
                               ),
                               Text(
-                                'Available: ${item.currentStock} ${item.unit}',
+                                'Stock: ${item.currentStock} ${item.unit}',
                                 style: const TextStyle(
                                     fontSize: 12, color: Colors.grey),
                               ),
@@ -745,6 +785,42 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                         ),
                       ],
                     ),
+                    if (isConvertible) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                              color: AppTheme.primaryColor.withOpacity(0.1)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text("Sell in Small Units ($subUnit)?",
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600)),
+                            Switch(
+                              value: useSubUnit,
+                              activeColor: AppTheme.primaryColor,
+                              onChanged: (val) => setSheetState(() {
+                                useSubUnit = val;
+                                if (useSubUnit && qtyController.text == '1') {
+                                  qtyController.text = '100';
+                                  qty = 100;
+                                } else if (!useSubUnit &&
+                                    qtyController.text == '100') {
+                                  qtyController.text = '1';
+                                  qty = 1;
+                                }
+                              }),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     if (lots.isNotEmpty) ...[
                       const Text(
@@ -762,12 +838,11 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                             setSheetState(() {
                               selectedLot = lot;
                               sellingPrice = lot.sellingPrice;
-                              double calculatedDisc = 0;
-                              if (lot.sellingPrice > 0) {
-                                calculatedDisc = ((lot.discount ?? 0) / lot.sellingPrice) * 100;
-                              }
+                              double calculatedDisc = lot.sellingPrice > 0
+                                  ? ((lot.discount ?? 0) / lot.sellingPrice) *
+                                      100
+                                  : 0;
                               discount = calculatedDisc;
-                              discountType = DiscountType.percentage;
                               sellingPriceController.text =
                                   lot.sellingPrice.toStringAsFixed(2);
                               discountController.text =
@@ -793,62 +868,49 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                             child: Row(
                               children: [
                                 Icon(
-                                  isSelected
-                                      ? Icons.radio_button_checked
-                                      : Icons.radio_button_unchecked,
-                                  size: 18,
-                                  color: isSelected
-                                      ? AppTheme.primaryColor
-                                      : Colors.grey,
-                                ),
+                                    isSelected
+                                        ? Icons.radio_button_checked
+                                        : Icons.radio_button_unchecked,
+                                    size: 18,
+                                    color: isSelected
+                                        ? AppTheme.primaryColor
+                                        : Colors.grey),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        lot.poNumber.isNotEmpty
-                                            ? 'PO: ${lot.poNumber}'
-                                            : 'Lot ${lot.lotId.substring(0, 6)}',
-                                        style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500),
-                                      ),
+                                          lot.poNumber.isNotEmpty
+                                              ? 'PO: ${lot.poNumber}'
+                                              : 'Lot ${lot.lotId.substring(0, 6)}',
+                                          style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500)),
                                       Text(
-                                        '${lot.quantityRemaining} ${item.unit} available',
-                                        style: const TextStyle(
-                                            fontSize: 11, color: Colors.grey),
-                                      ),
+                                          '${lot.quantityRemaining} ${item.unit} available',
+                                          style: const TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.grey)),
                                     ],
                                   ),
                                 ),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
-                                    Row(
-                                      children: [
-                                        Text(
-                                          'Cost: ${lot.unitPrice.toStringAsFixed(2)}',
-                                          style: const TextStyle(
-                                              fontSize: 11, color: Colors.grey),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          'Sell: ${lot.sellingPrice.toStringAsFixed(2)}',
-                                          style: const TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w500),
-                                        ),
-                                      ],
-                                    ),
+                                    Text(
+                                        'Price: ${lot.sellingPrice.toStringAsFixed(2)}',
+                                        style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w500)),
                                     if (lot.discount != null &&
                                         lot.discount! > 0)
                                       Text(
-                                        'Disc: -${lot.discount!.toStringAsFixed(2)}  →  ${lot.effectiveSellingPrice.toStringAsFixed(2)}',
-                                        style: const TextStyle(
-                                            fontSize: 11, color: Colors.orange),
-                                      ),
+                                          '-${lot.discount!.toStringAsFixed(2)}',
+                                          style: const TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.orange)),
                                   ],
                                 ),
                               ],
@@ -862,39 +924,31 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                     const SizedBox(height: 12),
                     CustomTextField(
                       controller: qtyController,
-                      label: 'Quantity *',
+                      label: 'Quantity (${useSubUnit ? subUnit : item.unit}) *',
                       prefixIcon: Icons.numbers_outlined,
-                      keyboardType: TextInputType.number,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return 'Required';
-                        final q = int.tryParse(v);
-                        if (q == null || q <= 0)
-                          return 'Must be greater than 0';
-                        if (q > item.currentStock) {
-                          return 'Exceeds stock (${item.currentStock})';
-                        }
+                        final q = double.tryParse(v);
+                        if (q == null || q <= 0) return 'Must be > 0';
+                        double stockCheck = useSubUnit ? (q / 1000) : q;
+                        if (stockCheck > item.currentStock)
+                          return 'Exceeds stock';
                         return null;
                       },
-                      onEditingComplete: () => setSheetState(() {
-                        qty = int.tryParse(qtyController.text) ?? 1;
-                      }),
+                      onChanged: (v) =>
+                          setSheetState(() => qty = double.tryParse(v) ?? 0),
                     ),
                     const SizedBox(height: 12),
                     CustomTextField(
                       controller: sellingPriceController,
-                      label: 'Selling Price *',
+                      label: 'Price per ${item.unit} *',
                       prefixIcon: Icons.sell_outlined,
                       keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) return 'Required';
-                        if (double.tryParse(v) == null) return 'Invalid price';
-                        return null;
-                      },
-                      onEditingComplete: () => setSheetState(() {
-                        sellingPrice =
-                            double.tryParse(sellingPriceController.text) ?? 0;
-                      }),
+                          const TextInputType.numberWithOptions(decimal: true),
+                      onChanged: (v) => setSheetState(
+                          () => sellingPrice = double.tryParse(v) ?? 0),
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -908,62 +962,23 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                             prefixIcon: Icons.discount_outlined,
                             keyboardType: const TextInputType.numberWithOptions(
                                 decimal: true),
-                            validator: (v) {
-                              if (v == null || v.trim().isEmpty) return null;
-                              final d = double.tryParse(v);
-                              if (d == null) return 'Invalid value';
-                              if (discountType == DiscountType.percentage &&
-                                  d > 100) return 'Max 100%';
-                              return null;
-                            },
-                            onEditingComplete: () => setSheetState(() {
-                              discount =
-                                  double.tryParse(discountController.text) ?? 0;
-                            }),
+                            onChanged: (v) => setSheetState(
+                                () => discount = double.tryParse(v) ?? 0),
                           ),
                         ),
                         const SizedBox(width: 10),
-                        Column(
-                          children: [
-                            const Text('Type',
-                                style: TextStyle(
-                                    fontSize: 11, color: Colors.grey)),
-                            const SizedBox(height: 4),
-                            Container(
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                    color:
-                                    AppTheme.primaryColor.withOpacity(0.3)),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  _buildDiscountTypeBtn(
-                                    label: 'Flat',
-                                    selected: discountType == DiscountType.flat,
-                                    onTap: () => setSheetState(() {
-                                      discountType = DiscountType.flat;
-                                      discount = double.tryParse(
-                                          discountController.text) ??
-                                          0;
-                                    }),
-                                  ),
-                                  _buildDiscountTypeBtn(
-                                    label: '%',
-                                    selected:
-                                    discountType == DiscountType.percentage,
-                                    onTap: () => setSheetState(() {
-                                      discountType = DiscountType.percentage;
-                                      discount = double.tryParse(
-                                          discountController.text) ??
-                                          0;
-                                    }),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                        _buildDiscountTypeBtn(
+                          label: 'Flat',
+                          selected: discountType == DiscountType.flat,
+                          onTap: () => setSheetState(
+                              () => discountType = DiscountType.flat),
+                        ),
+                        const SizedBox(width: 4),
+                        _buildDiscountTypeBtn(
+                          label: '%',
+                          selected: discountType == DiscountType.percentage,
+                          onTap: () => setSheetState(
+                              () => discountType = DiscountType.percentage),
                         ),
                       ],
                     ),
@@ -982,10 +997,9 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                '$qty × ${sellingPrice.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                    color: Colors.grey, fontSize: 14),
-                              ),
+                                  '$qty ${useSubUnit ? subUnit : item.unit} × ${effectivePricePerUnit.toStringAsFixed(4)}',
+                                  style: const TextStyle(
+                                      color: Colors.grey, fontSize: 13)),
                               Text(subtotal.toStringAsFixed(2),
                                   style: const TextStyle(fontSize: 14)),
                             ],
@@ -996,26 +1010,22 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  discountType == DiscountType.percentage
-                                      ? 'Discount (${discount.toStringAsFixed(2)}% of ${subtotal.toStringAsFixed(2)})'
-                                      : 'Discount (flat)',
-                                  style: const TextStyle(
-                                      color: Colors.orange, fontSize: 13),
-                                ),
-                                Text(
-                                  '- ${discountAmount.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                      color: Colors.orange,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 14),
-                                ),
+                                    discountType == DiscountType.percentage
+                                        ? 'Discount ($discount%)'
+                                        : 'Discount (flat)',
+                                    style: const TextStyle(
+                                        color: Colors.orange, fontSize: 13)),
+                                Text('- ${discountAmount.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                        color: Colors.orange,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 14)),
                               ],
                             ),
                           ],
                           const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 8),
-                            child: Divider(height: 1),
-                          ),
+                              padding: EdgeInsets.symmetric(vertical: 8),
+                              child: Divider(height: 1)),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -1023,14 +1033,11 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                                   style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15)),
-                              Text(
-                                total.toStringAsFixed(2),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 20,
-                                  color: AppTheme.primaryColor,
-                                ),
-                              ),
+                              Text(total.toStringAsFixed(2),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20,
+                                      color: AppTheme.primaryColor)),
                             ],
                           ),
                         ],
@@ -1040,11 +1047,9 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                     Row(
                       children: [
                         Expanded(
-                          child: OutlinedButton.icon(
-                            icon: const Icon(Icons.close, size: 18),
-                            label: const Text('Skip'),
-                            onPressed: () => Navigator.pop(ctx),
-                          ),
+                          child: OutlinedButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: const Text('Cancel')),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -1054,36 +1059,19 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                             label: const Text('Add to Bill'),
                             onPressed: () {
                               if (!formKey.currentState!.validate()) return;
-                              final finalQty =
-                                  int.tryParse(qtyController.text) ?? 1;
-                              final finalPrice = double.tryParse(
-                                  sellingPriceController.text) ??
-                                  0;
-                              final finalDiscount =
-                                  double.tryParse(discountController.text) ?? 0;
-
+                              double finalQtyForStock =
+                                  useSubUnit ? (qty / 1000) : qty;
                               setState(() {
-                                final existingIndex = _billItems.indexWhere(
-                                        (b) => b.item.itemId == item.itemId);
-                                if (existingIndex >= 0) {
-                                  _billItems[existingIndex].quantity +=
-                                      finalQty;
-                                  _billItems[existingIndex].sellingPrice =
-                                      finalPrice;
-                                  _billItems[existingIndex].discount =
-                                      finalDiscount;
-                                  _billItems[existingIndex].discountType =
-                                      discountType;
-                                } else {
-                                  _billItems.add(BillItem(
-                                    item: item,
-                                    lots: lots,
-                                    quantity: finalQty,
-                                    sellingPrice: finalPrice,
-                                    discount: finalDiscount,
-                                    discountType: discountType,
-                                  ));
-                                }
+                                _billItems.add(BillItem(
+                                  item: item,
+                                  lots: lots,
+                                  quantity: finalQtyForStock.toInt(),
+                                  sellingPrice: useSubUnit
+                                      ? effectivePricePerUnit
+                                      : sellingPrice,
+                                  discount: discount,
+                                  discountType: discountType,
+                                ));
                               });
                               Navigator.pop(ctx);
                             },
@@ -1129,8 +1117,9 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
   Widget _buildBusinessAppBarButton() {
     return TextButton.icon(
       onPressed: () => _showBusinessPickerDialog(context),
-      icon: const Icon(Icons.store_outlined, size: 18, color: Colors.deepPurpleAccent),
-      label:Text(
+      icon: const Icon(Icons.store_outlined,
+          size: 18, color: Colors.deepPurpleAccent),
+      label: Text(
         _selectedBusiness?.businessName ?? 'Select Business',
         style: const TextStyle(
           color: Colors.deepPurpleAccent,
@@ -1162,93 +1151,93 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
           width: double.maxFinite,
           child: businesses.isEmpty
               ? const Padding(
-            padding: EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.business_center_outlined,
-                    size: 48, color: Colors.grey),
-                SizedBox(height: 8),
-                Text(
-                  'No businesses found.\nAdd one in Settings.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ],
-            ),
-          )
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.business_center_outlined,
+                          size: 48, color: Colors.grey),
+                      SizedBox(height: 8),
+                      Text(
+                        'No businesses found.\nAdd one in Settings.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                )
               : ListView.builder(
-            shrinkWrap: true,
-            itemCount: businesses.length,
-            itemBuilder: (_, index) {
-              final b = businesses[index];
-              final isSelected = _selectedBusiness?.uid == b.uid;
-              return ListTile(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-                tileColor: isSelected
-                    ? AppTheme.primaryColor.withOpacity(0.08)
-                    : null,
-                leading: b.logoUrl != null
-                    ? ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: Image.network(
-                    b.logoUrl!,
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
-                    const CircleAvatar(
-                      child: Icon(Icons.business, size: 20),
-                    ),
-                  ),
-                )
-                    : CircleAvatar(
-                  backgroundColor:
-                  AppTheme.primaryColor.withOpacity(0.1),
-                  child: Text(
-                    b.businessName.substring(0, 1).toUpperCase(),
-                    style: const TextStyle(
-                        color: AppTheme.primaryColor,
-                        fontWeight: FontWeight.bold),
-                  ),
+                  shrinkWrap: true,
+                  itemCount: businesses.length,
+                  itemBuilder: (_, index) {
+                    final b = businesses[index];
+                    final isSelected = _selectedBusiness?.uid == b.uid;
+                    return ListTile(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      tileColor: isSelected
+                          ? AppTheme.primaryColor.withOpacity(0.08)
+                          : null,
+                      leading: b.logoUrl != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: Image.network(
+                                b.logoUrl!,
+                                width: 40,
+                                height: 40,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) =>
+                                    const CircleAvatar(
+                                  child: Icon(Icons.business, size: 20),
+                                ),
+                              ),
+                            )
+                          : CircleAvatar(
+                              backgroundColor:
+                                  AppTheme.primaryColor.withOpacity(0.1),
+                              child: Text(
+                                b.businessName.substring(0, 1).toUpperCase(),
+                                style: const TextStyle(
+                                    color: AppTheme.primaryColor,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                      title: Text(
+                        b.businessName,
+                        style: TextStyle(
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.normal,
+                          color: isSelected ? AppTheme.primaryColor : null,
+                        ),
+                      ),
+                      subtitle: b.address != null
+                          ? Text(
+                              b.address!,
+                              style: const TextStyle(fontSize: 11),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            )
+                          : null,
+                      trailing: isSelected
+                          ? const Icon(Icons.check_circle,
+                              color: AppTheme.primaryColor)
+                          : null,
+                      onTap: () {
+                        final currentUser = context.read<UserBloc>().state.user;
+                        if (currentUser == null) return;
+                        setState(() => _selectedBusiness = b);
+                        context.read<UserBloc>().add(
+                              UpdateUser(
+                                uid: currentUser.uid,
+                                user: currentUser.copyWith(
+                                    activeBusiness: b.businessName),
+                              ),
+                            );
+                        Navigator.pop(ctx);
+                      },
+                    );
+                  },
                 ),
-                title: Text(
-                  b.businessName,
-                  style: TextStyle(
-                    fontWeight:
-                    isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: isSelected ? AppTheme.primaryColor : null,
-                  ),
-                ),
-                subtitle: b.address != null
-                    ? Text(
-                  b.address!,
-                  style: const TextStyle(fontSize: 11),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                )
-                    : null,
-                trailing: isSelected
-                    ? const Icon(Icons.check_circle,
-                    color: AppTheme.primaryColor)
-                    : null,
-                onTap: () {
-                  final currentUser = context.read<UserBloc>().state.user;
-                  if (currentUser == null) return;
-                  setState(() => _selectedBusiness = b);
-                  context.read<UserBloc>().add(
-                    UpdateUser(
-                      uid: currentUser.uid,
-                      user: currentUser.copyWith(
-                          activeBusiness: b.businessName),
-                    ),
-                  );
-                  Navigator.pop(ctx);
-                },
-              );
-            },
-          ),
         ),
         actions: [
           TextButton(
@@ -1257,6 +1246,255 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showClientDetailDialog(BuildContext context) {
+    final nameController = TextEditingController();
+    final contactController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.person_add_alt_1_outlined,
+                color: Colors.deepPurpleAccent),
+            SizedBox(width: 10),
+            Text('Client Details'),
+          ],
+        ),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CustomTextField(
+                controller: nameController,
+                label: 'Client Name',
+                prefixIcon: Icons.person_outline,
+                validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+              ),
+              const SizedBox(height: 16),
+              CustomTextField(
+                controller: contactController,
+                label: 'Contact Number',
+                prefixIcon: Icons.phone_outlined,
+                keyboardType: TextInputType.phone,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.deepPurpleAccent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                setState(() {
+                  _dispatchedToController.text = nameController.text.trim();
+                  _notesController.text =
+                      'Contact: ${contactController.text.trim()}';
+                });
+                Navigator.pop(ctx);
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showNoneScanListDialog(BuildContext context) {
+    final scaffoldContext = context;
+    final inventoryBloc = context.read<InventoryBloc>();
+    final searchController = TextEditingController();
+
+    inventoryBloc.add(const LoadNoneScanItemEvents());
+
+    showModalBottomSheet(
+      context: scaffoldContext,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (modalContext) {
+        return BlocProvider.value(
+          value: inventoryBloc,
+          child: StatefulBuilder(
+            builder: (ctx, setModalState) => SizedBox(
+              height: MediaQuery.of(modalContext).size.height * 0.85,
+              child: BlocBuilder<InventoryBloc, InventoryState>(
+                builder: (context, state) {
+                  if (state.status == InventoryStatus.loading) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                          color: Colors.deepPurpleAccent),
+                    );
+                  }
+
+                  final query = searchController.text.toLowerCase();
+                  final allNoneScanItems = state.items
+                      .where((item) => item.isScanning == false)
+                      .toList();
+
+                  final filteredItems = allNoneScanItems.where((item) {
+                    final matchesSearch = item.name
+                            .toLowerCase()
+                            .contains(query) ||
+                        (item.barcode?.toLowerCase().contains(query) ?? false);
+                    return matchesSearch;
+                  }).toList();
+
+                  final shortcuts = allNoneScanItems
+                      .where((item) =>
+                          item.barcode != null && item.barcode!.length <= 3)
+                      .take(8)
+                      .toList();
+
+                  return Column(
+                    children: [
+                      const SizedBox(height: 12),
+                      Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Text(
+                          "Non-Scanning Items",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: TextField(
+                          controller: searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Search name or short ID...',
+                            prefixIcon: const Icon(Icons.search),
+                            suffixIcon: searchController.text.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: () {
+                                      searchController.clear();
+                                      setModalState(() {});
+                                    },
+                                  )
+                                : null,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding:
+                                const EdgeInsets.symmetric(vertical: 0),
+                          ),
+                          onChanged: (val) => setModalState(() {}),
+                        ),
+                      ),
+                      if (shortcuts.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 40,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: shortcuts.length,
+                            itemBuilder: (ctx, i) {
+                              final item = shortcuts[i];
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: ActionChip(
+                                  backgroundColor:
+                                      AppTheme.primaryColor.withOpacity(0.1),
+                                  side: BorderSide(
+                                      color: AppTheme.primaryColor
+                                          .withOpacity(0.2)),
+                                  label: Text(
+                                    item.barcode!.toUpperCase(),
+                                    style: const TextStyle(
+                                      color: AppTheme.primaryColor,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.pop(modalContext);
+                                    setState(() {
+                                      _pendingItem = item;
+                                      _itemDetailShowing = true;
+                                    });
+                                    inventoryBloc.add(
+                                        LoadLotsForItem(itemId: item.itemId));
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 8),
+                      const Divider(),
+                      Expanded(
+                        child: filteredItems.isEmpty
+                            ? const Center(child: Text("No items found"))
+                            : ListView.builder(
+                                itemCount: filteredItems.length,
+                                itemBuilder: (ctx, index) {
+                                  final item = filteredItems[index];
+                                  return ListTile(
+                                    leading: CircleAvatar(
+                                      backgroundColor: AppTheme.primaryColor
+                                          .withOpacity(0.1),
+                                      child: Text(
+                                        item.barcode!.length >= 2
+                                            ? item.barcode!
+                                                .substring(0, 2)
+                                                .toUpperCase()
+                                            : item.barcode!.toUpperCase(),
+                                        style: const TextStyle(
+                                          color: AppTheme.primaryColor,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                    title: Text(item.name),
+                                    subtitle: Text(
+                                        "${item.variant ?? ''} (${item.currentStock} ${item.unit})"),
+                                    onTap: () {
+                                      Navigator.pop(modalContext);
+                                      setState(() {
+                                        _pendingItem = item;
+                                        _itemDetailShowing = true;
+                                      });
+                                      inventoryBloc.add(
+                                          LoadLotsForItem(itemId: item.itemId));
+                                    },
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -1295,7 +1533,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                   itemBuilder: (_, index) {
                     final b = _billItems[index];
                     final qtyCtrl =
-                    TextEditingController(text: '${b.quantity}');
+                        TextEditingController(text: '${b.quantity}');
                     final priceCtrl = TextEditingController(
                         text: b.sellingPrice.toStringAsFixed(2));
                     final discCtrl = TextEditingController(
@@ -1361,8 +1599,8 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                                     label: 'Price',
                                     prefixIcon: Icons.attach_money_outlined,
                                     keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                        decimal: true),
+                                        const TextInputType.numberWithOptions(
+                                            decimal: true),
                                     onEditingComplete: () {
                                       setState(() {
                                         _billItems[index].sellingPrice =
@@ -1382,13 +1620,13 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                                   child: CustomTextField(
                                     controller: discCtrl,
                                     label: b.discountType ==
-                                        DiscountType.percentage
+                                            DiscountType.percentage
                                         ? 'Disc %'
                                         : 'Disc (flat)',
                                     prefixIcon: Icons.discount_outlined,
                                     keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                        decimal: true),
+                                        const TextInputType.numberWithOptions(
+                                            decimal: true),
                                     onEditingComplete: () {
                                       setState(() {
                                         _billItems[index].discount =
@@ -1458,7 +1696,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                                 children: [
                                   Row(
                                     mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         '${b.quantity} × ${b.sellingPrice.toStringAsFixed(2)}',
@@ -1475,11 +1713,11 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                                     const SizedBox(height: 4),
                                     Row(
                                       mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
                                           b.discountType ==
-                                              DiscountType.percentage
+                                                  DiscountType.percentage
                                               ? 'Discount (${b.discount.toStringAsFixed(2)}%)'
                                               : 'Discount (flat)',
                                           style: const TextStyle(
@@ -1501,7 +1739,7 @@ class _ScanDispatchScreenState extends State<ScanDispatchScreen> {
                                   ),
                                   Row(
                                     mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       const Text('Line total',
                                           style: TextStyle(

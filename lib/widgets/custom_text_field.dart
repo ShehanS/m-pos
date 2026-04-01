@@ -1,4 +1,3 @@
-// lib/widgets/custom_text_field.dart
 import 'package:flutter/material.dart';
 
 class CustomTextField extends StatelessWidget {
@@ -12,6 +11,7 @@ class CustomTextField extends StatelessWidget {
   final int? maxLines;
   final TextInputAction? textInputAction;
   final VoidCallback? onEditingComplete;
+  final ValueChanged<String>? onChanged;
 
   const CustomTextField({
     super.key,
@@ -25,6 +25,7 @@ class CustomTextField extends StatelessWidget {
     this.maxLines = 1,
     this.textInputAction,
     this.onEditingComplete,
+    this.onChanged,
   });
 
   @override
@@ -36,10 +37,14 @@ class CustomTextField extends StatelessWidget {
       maxLines: maxLines,
       textInputAction: textInputAction,
       onEditingComplete: onEditingComplete,
+      onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
         suffixIcon: suffixIcon,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
       validator: validator,
     );
