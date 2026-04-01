@@ -18,6 +18,7 @@ import '../bloc/scanner/scanner_bloc.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/auth/forgot_password_screen.dart';
+import '../screens/customer_bills/customer_bills_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/printer/bluetooth_printer_screen.dart';
 import '../screens/profile/profile_screen.dart';
@@ -237,11 +238,11 @@ class AppRouter {
               ),
             ),
             GoRoute(
-              path: 'ai-assistant',
-              name: 'aiAssistant',
+              path: 'customers-bills',
+              name: 'customersBills',
               pageBuilder: (context, state) => CustomTransitionPage(
                 key: state.pageKey,
-                child: const BluetoothPrinterScreen(),
+                child: const CustomerBillsScreen(),
                 transitionsBuilder: _slideTransition,
               ),
             )

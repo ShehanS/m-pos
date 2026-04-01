@@ -13,4 +13,5 @@ class RouteNames {
   static const String stockIn = '/home/stockIn';
   static const String aiAssistant = '/home/ai-assistant';
   static const String printPreview = '/home/print-preview';
+  static const String customerBills = '/home/customers-bills';
 }

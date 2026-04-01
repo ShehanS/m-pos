@@ -4,28 +4,31 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_bloc_app/bloc/bill/bill_bloc.dart';
+import 'package:flutter_bloc_app/bloc/bill/bill_event.dart';
 import 'package:flutter_bloc_app/bloc/blocs.dart';
 import 'package:flutter_bloc_app/bloc/printer/printer_bloc.dart';
 import 'package:flutter_bloc_app/bloc/user/user_bloc.dart';
 import 'package:flutter_bloc_app/dtos/bill_item.dart';
+import 'package:flutter_bloc_app/entities/bill_entity.dart';
 import 'package:flutter_bloc_app/entities/user_entity.dart';
 import 'package:flutter_bloc_app/routes/route_names.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../bloc/scanner/scanner_bloc.dart';
-
 class PrintTemplate extends StatefulWidget {
   final List<BillItem> billItems;
-  final String? dispatchedTo;
-  final String? notes;
+  final String? customer;
+  final String? customerContact;
+  final BillEntity bill;
 
   const PrintTemplate({
     super.key,
     required this.billItems,
-    this.dispatchedTo,
-    this.notes,
+    this.customer,
+    this.customerContact,
+    required this.bill,
   });
 
   @override
@@ -38,14 +41,9 @@ class _PrintTemplateState extends State<PrintTemplate> {
   bool _logoLoaded = false;
   String? _logoUrl;
 
-  double get _subtotal =>
-      widget.billItems.fold(0.0, (sum, i) => sum + i.subtotal);
-
-  double get _totalDiscount =>
-      widget.billItems.fold(0.0, (sum, i) => sum + i.discountAmount);
-
-  double get _grandTotal =>
-      widget.billItems.fold(0.0, (sum, i) => sum + i.total);
+  double get _subtotal => widget.billItems.fold(0.0, (sum, i) => sum + i.subtotal);
+  double get _totalDiscount => widget.billItems.fold(0.0, (sum, i) => sum + i.discountAmount);
+  double get _grandTotal => widget.billItems.fold(0.0, (sum, i) => sum + i.total);
 
   @override
   void initState() {
@@ -59,7 +57,7 @@ class _PrintTemplateState extends State<PrintTemplate> {
     final user = context.read<UserBloc>().state.user;
     final selectedBusiness = user?.business?.firstWhere(
           (b) => b.businessName == user.activeBusiness,
-      orElse: () => user.business!.first,
+      orElse: () => user!.business!.first,
     );
 
     _logoUrl = selectedBusiness?.logoUrl;
@@ -69,7 +67,6 @@ class _PrintTemplateState extends State<PrintTemplate> {
     } else {
       setState(() => _logoLoaded = true);
     }
-
 
     await Future.delayed(const Duration(milliseconds: 500));
     if (mounted) _print();
@@ -101,8 +98,7 @@ class _PrintTemplateState extends State<PrintTemplate> {
   }
 
   Future<void> _print() async {
-    final selectedDevice =
-        context.read<PrinterBloc>().state.selectedDevice;
+    final selectedDevice = context.read<PrinterBloc>().state.selectedDevice;
 
     if (selectedDevice == null) {
       if (mounted) {
@@ -121,16 +117,14 @@ class _PrintTemplateState extends State<PrintTemplate> {
     try {
       await Future.delayed(const Duration(milliseconds: 300));
 
-      final boundary = _receiptKey.currentContext?.findRenderObject()
-      as RenderRepaintBoundary?;
+      final boundary = _receiptKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
 
       if (boundary == null) {
         throw Exception('Could not find receipt render boundary');
       }
 
       final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
-      final byteData =
-      await image.toByteData(format: ui.ImageByteFormat.png);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
 
       if (byteData == null) {
         throw Exception('Failed to convert receipt to image');
@@ -156,6 +150,7 @@ class _PrintTemplateState extends State<PrintTemplate> {
             backgroundColor: Colors.green,
           ),
         );
+        context.read<BillBloc>().add(UpdateBill(bill: widget.bill.copyWith(status: BillStatus.competed)));
         context.pushReplacement(RouteNames.scanDispatch);
       }
     } catch (e) {
@@ -182,11 +177,7 @@ class _PrintTemplateState extends State<PrintTemplate> {
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Center(
-                child: SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
+                child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
               ),
             )
           else
@@ -197,9 +188,7 @@ class _PrintTemplateState extends State<PrintTemplate> {
             ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: _buildReceiptContent(context),
-      ),
+      body: SingleChildScrollView(child: _buildReceiptContent(context)),
     );
   }
 
@@ -233,78 +222,23 @@ class _PrintTemplateState extends State<PrintTemplate> {
                 Text(
                   selectedBusiness?.businessName ?? 'MY STORE',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 25,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
+                  style: const TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: Colors.black),
                 ),
                 if (selectedBusiness?.address != null)
-                  Text(
-                    selectedBusiness!.address!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 18, color: Colors.black),
-                  ),
+                  Text(selectedBusiness!.address!, textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, color: Colors.black)),
                 if (selectedBusiness?.contact != null)
-                  Text(
-                    selectedBusiness!.contact!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 18, color: Colors.black),
-                  ),
+                  Text(selectedBusiness!.contact!, textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, color: Colors.black)),
                 _dashedDivider(),
-                _receiptRow(
-                  'Date',
-                  DateFormat('dd/MM/yyyy hh:mm a').format(DateTime.now()),
-                ),
-                if (widget.dispatchedTo != null &&
-                    widget.dispatchedTo!.isNotEmpty)
-                  _receiptRow('Customer', widget.dispatchedTo!),
+                _receiptRow('Date', DateFormat('dd/MM/yyyy hh:mm a').format(DateTime.now())),
+                if (widget.customer != null && widget.customer!.isNotEmpty) _receiptRow('Customer', widget.customer!),
+                if (widget.customerContact != null && widget.customerContact!.isNotEmpty) _receiptRow('Contact', widget.customerContact!),
                 _dashedDivider(),
                 const Row(
                   children: [
-                    Expanded(
-                      flex: 4,
-                      child: Text(
-                        'Item',
-                        style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 40,
-                      child: Text(
-                        'Qty',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 85,
-                      child: Text(
-                        'Price',
-                        textAlign: TextAlign.right,
-                        style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 85,
-                      child: Text(
-                        'Total',
-                        textAlign: TextAlign.right,
-                        style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black),
-                      ),
-                    ),
+                    Expanded(flex: 4, child: Text('Item', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black))),
+                    SizedBox(width: 80, child: Text('Qty', textAlign: TextAlign.center, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black))),
+                    SizedBox(width: 85, child: Text('Price', textAlign: TextAlign.right, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black))),
+                    SizedBox(width: 85, child: Text('Total', textAlign: TextAlign.right, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black))),
                   ],
                 ),
                 _dashedDivider(),
@@ -314,6 +248,25 @@ class _PrintTemplateState extends State<PrintTemplate> {
                   itemCount: widget.billItems.length,
                   itemBuilder: (context, index) {
                     final b = widget.billItems[index];
+
+                    final String baseUnit = b.item.unit.toLowerCase().trim();
+                    final bool isWeight = baseUnit == 'kg';
+                    final bool isLiquid = baseUnit == 'l' || baseUnit == 'ltr' || baseUnit == 'liter';
+
+                    String displayQty;
+                    String displayPrice;
+
+                    if ((isWeight || isLiquid) && b.quantity < 1.0) {
+                      displayQty = "${(b.quantity * 1000).toInt()} ${isWeight ? 'g' : 'ml'}";
+                      displayPrice = (b.sellingPrice / 1000).toStringAsFixed(2);
+                    } else if ((isWeight || isLiquid) && b.quantity >= 1.0) {
+                      displayQty = "${b.quantity.toStringAsFixed(2)} ${b.item.unit}";
+                      displayPrice = b.sellingPrice.toStringAsFixed(2);
+                    } else {
+                      displayQty = b.quantity % 1 == 0 ? "${b.quantity.toInt()}" : b.quantity.toStringAsFixed(2);
+                      displayPrice = b.sellingPrice.toStringAsFixed(2);
+                    }
+
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 3),
                       child: Column(
@@ -325,40 +278,24 @@ class _PrintTemplateState extends State<PrintTemplate> {
                               Expanded(
                                 flex: 4,
                                 child: Text(
-                                  b.item.variant != null
-                                      ? '${b.item.name} (${b.item.variant})'
-                                      : b.item.name,
-                                  style: const TextStyle(
-                                      fontSize: 20, color: Colors.black),
+                                  b.item.variant != null ? '${b.item.name} (${b.item.variant})' : b.item.name,
+                                  style: const TextStyle(fontSize: 20, color: Colors.black),
                                 ),
                               ),
                               SizedBox(
-                                width: 40,
-                                child: Text(
-                                  '${b.quantity}',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                      fontSize: 20, color: Colors.black),
-                                ),
+                                width: 80,
+                                child: Text(displayQty, textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, color: Colors.black)),
                               ),
                               SizedBox(
                                 width: 85,
-                                child: Text(
-                                  b.sellingPrice.toStringAsFixed(2),
-                                  textAlign: TextAlign.right,
-                                  style: const TextStyle(
-                                      fontSize: 20, color: Colors.black),
-                                ),
+                                child: Text(displayPrice, textAlign: TextAlign.right, style: const TextStyle(fontSize: 20, color: Colors.black)),
                               ),
                               SizedBox(
                                 width: 85,
                                 child: Text(
                                   b.subtotal.toStringAsFixed(2),
                                   textAlign: TextAlign.right,
-                                  style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.black),
+                                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: Colors.black),
                                 ),
                               ),
                             ],
@@ -368,11 +305,8 @@ class _PrintTemplateState extends State<PrintTemplate> {
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 Text(
-                                  b.discountType == DiscountType.percentage
-                                      ? 'Disc ${b.discount.toStringAsFixed(0)}%'
-                                      : 'Disc',
-                                  style: const TextStyle(
-                                      fontSize: 18, color: Colors.black),
+                                  b.discountType == DiscountType.percentage ? 'Disc ${b.discount.toStringAsFixed(0)}%' : 'Disc',
+                                  style: const TextStyle(fontSize: 18, color: Colors.black),
                                 ),
                                 const SizedBox(width: 6),
                                 SizedBox(
@@ -380,32 +314,7 @@ class _PrintTemplateState extends State<PrintTemplate> {
                                   child: Text(
                                     '- ${b.discountAmount.toStringAsFixed(2)}',
                                     textAlign: TextAlign.right,
-                                    style: const TextStyle(
-                                        fontSize: 18, color: Colors.black),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                const Text(
-                                  'Item Total',
-                                  style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black),
-                                ),
-                                const SizedBox(width: 6),
-                                SizedBox(
-                                  width: 85,
-                                  child: Text(
-                                    b.total.toStringAsFixed(2),
-                                    textAlign: TextAlign.right,
-                                    style: const TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black),
+                                    style: const TextStyle(fontSize: 18, color: Colors.black),
                                   ),
                                 ),
                               ],
@@ -424,13 +333,8 @@ class _PrintTemplateState extends State<PrintTemplate> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Total Discount',
-                            style: TextStyle(fontSize: 20, color: Colors.black)),
-                        Text(
-                          '- ${_totalDiscount.toStringAsFixed(2)}',
-                          style:
-                          const TextStyle(fontSize: 20, color: Colors.black),
-                        ),
+                        const Text('Total Discount', style: TextStyle(fontSize: 20, color: Colors.black)),
+                        Text('- ${_totalDiscount.toStringAsFixed(2)}', style: const TextStyle(fontSize: 20, color: Colors.black)),
                       ],
                     ),
                   ),
@@ -438,40 +342,13 @@ class _PrintTemplateState extends State<PrintTemplate> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'TOTAL / එකතුව',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 25,
-                          color: Colors.black),
-                    ),
-                    Text(
-                      'LKR ${_grandTotal.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 25,
-                          color: Colors.black),
-                    ),
+                    const Text('TOTAL / එකතුව', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25, color: Colors.black)),
+                    Text('LKR ${_grandTotal.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 25, color: Colors.black)),
                   ],
                 ),
-                if (widget.notes != null && widget.notes!.isNotEmpty) ...[
-                  _dashedDivider(),
-                  Text(
-                    'Note: ${widget.notes}',
-                    style: const TextStyle(fontSize: 18, color: Colors.black),
-                  ),
-                ],
                 _dashedDivider(),
-                const Text(
-                  'Thank you! / ස්තූතියි! / நன்றி!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 20, color: Colors.black),
-                ),
-                const Text(
-                  'Please come again',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, color: Colors.black),
-                ),
+                const Text('Thank you! / ස්තූතියි! / நன்றி!', textAlign: TextAlign.center, style: TextStyle(fontSize: 20, color: Colors.black)),
+                const Text('Please come again', textAlign: TextAlign.center, style: TextStyle(fontSize: 18, color: Colors.black)),
                 const SizedBox(height: 50),
               ],
             ),
@@ -484,20 +361,14 @@ class _PrintTemplateState extends State<PrintTemplate> {
   Widget _dashedDivider() {
     return const Padding(
       padding: EdgeInsets.symmetric(vertical: 3),
-      child: Text(
-        '- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -',
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 10, color: Colors.black),
-        maxLines: 1,
-        overflow: TextOverflow.clip,
-      ),
+      child: Text('- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -',
+          textAlign: TextAlign.center, style: TextStyle(fontSize: 10, color: Colors.black), maxLines: 1, overflow: TextOverflow.clip),
     );
   }
 
   Widget _receiptRow(String label, String value, {bool bold = false}) {
     final style = bold
-        ? const TextStyle(
-        fontWeight: FontWeight.bold, fontSize: 22, color: Colors.black)
+        ? const TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.black)
         : const TextStyle(fontSize: 20, color: Colors.black);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1),
